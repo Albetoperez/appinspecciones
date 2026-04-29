@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
+<title>Elecnor - App Inspecciones v24</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="modalFoto" onclick="this.style.display='none'; document.body.style.overflow='';">
+    <span style="position:absolute;top:20px;right:20px;color:white;font-size:40px;cursor:pointer">&times;</span>
+    <img id="imgModal">
+</div>
+
+<div id="modalAuth" class="modal-overlay" style="z-index: 4000;">
+    <div class="modal-content" style="text-align: center; max-width: 300px; padding: 30px 20px;">
+        <div style="font-size: 40px; margin-bottom: 10px;">🔒</div>
+        <h3 style="margin-top:0; color:var(--elecnor-blue);">Acceso Restringido</h3>
+        <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Introduce el PIN de Dirección para ver el Panel de Control.</p>
+        <input type="password" id="input-pin" placeholder="****" style="text-align: center; font-size: 20px; letter-spacing: 5px;">
+        <button onclick="verificarPin()" style="background:var(--success-green); color:white; width:100%; margin-top:15px; padding: 12px;">Acceder</button>
+        <button onclick="document.getElementById('modalAuth').style.display='none'" style="background:transparent; color:#666; border:1px solid #ccc; width:100%; margin-top:10px; padding: 10px;">Cancelar</button>
+    </div>
+</div>
+
+<div id="modalAlerta" class="modal-overlay" style="z-index: 3000;">
+    <div class="modal-content" style="text-align: center; max-width: 320px; padding: 30px 20px;">
+        <div id="alerta-icono" style="font-size: 40px; margin-bottom: 10px;">⚠️</div>
+        <h3 id="alerta-titulo" style="margin-top:0; color:var(--danger-red);">Atención Requerida</h3>
+        <p id="texto-alerta" style="color: #555; font-size: 14px; line-height: 1.5;"></p>
+        <button id="alerta-btn" onclick="document.getElementById('modalAlerta').style.display='none'" style="background:var(--elecnor-blue); color:white; width:100%; margin-top:15px; padding: 12px;">Entendido</button>
+    </div>
+</div>
+
+<div id="modalAnotacion" class="modal-overlay">
+    <div class="modal-content" style="max-width: 95vw; width: 500px; max-height: 95vh; display: flex; flex-direction: column; text-align: center; padding: 15px;">
+        <h3 style="margin: 0 0 5px 0; color:var(--elecnor-blue); flex-shrink: 0;">Marcar Fotografía</h3>
+        <p style="font-size: 11px; color: #666; margin-bottom: 10px; flex-shrink: 0;">Dibuja para señalar defectos.</p>
+        <div style="border: 2px solid #ccc; background: #222; flex-grow: 1; display: flex; justify-content: center; align-items: center; touch-action: none; overflow: hidden; border-radius: 4px;">
+            <canvas id="canvas-anotacion" style="cursor: crosshair; touch-action: none; max-width: 100%; max-height: 100%; object-fit: contain; display: block;"></canvas>
+        </div>
+        <div style="display:flex; justify-content:space-between; gap:10px; margin-top:15px; flex-shrink: 0; flex-wrap: wrap;">
+            <button onclick="limpiarAnotacion()" style="background:#ff9800; color:white; font-size:12px;">↺ Deshacer</button>
+            <div style="display: flex; gap:10px;">
+                <button onclick="cerrarModalAnotacion()" style="background:#ccc; color:#333; font-size:12px;">Cancelar</button>
+                <button onclick="guardarAnotacion()" style="background:var(--success-green); color:white; font-size:12px;">Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modalAjustes" class="modal-overlay">
+    <div class="modal-content">
+        <h3 style="margin-top:0; color:var(--elecnor-blue);">Configuración del Proyecto</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div><label>Proyecto</label><input type="text" id="conf-proyecto"></div>
+            <div><label>Cliente</label><input type="text" id="conf-cliente"></div>
+        </div>
+        
+        <h4 style="margin: 20px 0 10px 0; color: var(--warning-orange); border-bottom: 1px solid #eee; padding-bottom: 5px;">Cantidades Totales por Sub-disciplina</h4>
+        <p style="font-size: 11px; color: #666; margin-top:0;">Introduce los totales físicos de la obra para calcular el avance real %.</p>
+        <div class="table-responsive">
+            <table class="table-ajustes">
+                <thead>
+                    <tr><th>Tipo de Inspección</th><th>A1</th><th>A2</th><th>A3</th><th>A4</th><th>A5</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>MEC</strong> - Trackers (Todos)</td>
+                        <td><input type="number" id="b-MEC-0"></td><td><input type="number" id="b-MEC-1"></td><td><input type="number" id="b-MEC-2"></td><td><input type="number" id="b-MEC-3"></td><td><input type="number" id="b-MEC-4"></td></tr>
+                    <tr><td><strong>CIV</strong> - Vallado</td>
+                        <td><input type="number" id="b-CIV-Vallado-0"></td><td><input type="number" id="b-CIV-Vallado-1"></td><td><input type="number" id="b-CIV-Vallado-2"></td><td><input type="number" id="b-CIV-Vallado-3"></td><td><input type="number" id="b-CIV-Vallado-4"></td></tr>
+                    <tr><td><strong>CIV</strong> - Drenajes</td>
+                        <td><input type="number" id="b-CIV-Drenajes-0"></td><td><input type="number" id="b-CIV-Drenajes-1"></td><td><input type="number" id="b-CIV-Drenajes-2"></td><td><input type="number" id="b-CIV-Drenajes-3"></td><td><input type="number" id="b-CIV-Drenajes-4"></td></tr>
+                    <tr><td><strong>CIV</strong> - Caminos</td>
+                        <td><input type="number" id="b-CIV-Caminos-0"></td><td><input type="number" id="b-CIV-Caminos-1"></td><td><input type="number" id="b-CIV-Caminos-2"></td><td><input type="number" id="b-CIV-Caminos-3"></td><td><input type="number" id="b-CIV-Caminos-4"></td></tr>
+                    <tr><td><strong>ELE</strong> - Zanjas</td>
+                        <td><input type="number" id="b-ELE-Zanjas-0"></td><td><input type="number" id="b-ELE-Zanjas-1"></td><td><input type="number" id="b-ELE-Zanjas-2"></td><td><input type="number" id="b-ELE-Zanjas-3"></td><td><input type="number" id="b-ELE-Zanjas-4"></td></tr>
+                    <tr><td><strong>ELE</strong> - Cable Solar</td>
+                        <td><input type="number" id="b-ELE-Cables-0"></td><td><input type="number" id="b-ELE-Cables-1"></td><td><input type="number" id="b-ELE-Cables-2"></td><td><input type="number" id="b-ELE-Cables-3"></td><td><input type="number" id="b-ELE-Cables-4"></td></tr>
+                    <tr><td><strong>ELE</strong> - Combiner Box</td>
+                        <td><input type="number" id="b-ELE-CB-0"></td><td><input type="number" id="b-ELE-CB-1"></td><td><input type="number" id="b-ELE-CB-2"></td><td><input type="number" id="b-ELE-CB-3"></td><td><input type="number" id="b-ELE-CB-4"></td></tr>
+                    <tr><td><strong>ELE</strong> - Cables MT</td>
+                        <td><input type="number" id="b-ELE-MT-0"></td><td><input type="number" id="b-ELE-MT-1"></td><td><input type="number" id="b-ELE-MT-2"></td><td><input type="number" id="b-ELE-MT-3"></td><td><input type="number" id="b-ELE-MT-4"></td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+        <label>Logo Corporativo</label>
+        <input type="file" id="conf-logo-input" accept="image/*" onchange="cargarLogoAjustes(this)" style="width: 100%; border: none;">
+        <div style="margin-top:10px; text-align:center;">
+            <img id="conf-logo-preview" style="max-height: 50px; max-width: 100%; display: none; border: 1px solid #ccc; padding: 5px; border-radius: 4px;">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+            <button onclick="document.getElementById('modalAjustes').style.display='none'" style="background:#ccc; color:#333;">Cancelar</button>
+            <button onclick="guardarAjustes()" style="background:var(--elecnor-blue); color:white;">Guardar Cambios</button>
+        </div>
+    </div>
+</div>
+
+<header>
+    <div class="header-logo-area" onclick="irInicio()" title="Volver al Inicio">
+        <img src="logo.jpg" alt="Elecnor" class="img-logo-elecnor" style="height: 32px; object-fit: contain; background-color: white;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <h1 style="margin:0; color: var(--elecnor-blue); font-size: 1.5rem; display:none;">Elecnor</h1>
+        <div style="border-left: 2px solid var(--warning-orange); padding-left: 10px; display: flex; flex-direction: column; justify-content: center;">
+            <small style="color: #555; font-weight: bold; font-size: 0.8rem; line-height: 1;">Inspecciones FV</small>
+        </div>
+    </div>
+    <div style="display: flex; gap: 15px; align-items: center;">
+        <button onclick="abrirIndicePlanos()" style="background: var(--elecnor-blue); color: white; display: flex; align-items: center; gap: 6px; font-size: 14px; padding: 8px 15px;" title="Consultar Índice de Planos">
+            <span style="font-size: 1.2rem;">📚</span> Planos
+        </button>
+        <button onclick="abrirAjustes()" style="background: transparent; font-size: 1.5rem; padding: 0; box-shadow: none;" title="Ajustes de la App">⚙️</button>
+    </div>
+</header>
+
+<div id="portada" class="portada-container">
+    <div class="portada-logo-wrapper">
+        <img src="logo.jpg" alt="Logo Elecnor" class="img-logo-elecnor" style="width: 280px; max-width: 80vw; margin-bottom: 20px; background-color: white;" onerror="this.outerHTML='<h1 class=\'portada-logo\'>elecnor</h1>'">
+        <h2 class="portada-title">INSPECCIONES PARQUES FOTOVOLTAICOS</h2>
+        <div class="portada-subtitle">Delegación Renovables, Gas y Agua</div>
+    </div>
+    <div class="portada-botones">
+        <button class="btn-portada btn-portada-primary" onclick="nuevaInspeccion()">
+            <span style="font-size: 1.4rem;">📝</span> Crear Informe
+        </button>
+        <button class="btn-portada btn-portada-primary" onclick="mostrarHistorial()">
+            <span style="font-size: 1.4rem;">🗂️</span> Ver Historial
+        </button>
+        <button class="btn-portada btn-portada-primary" onclick="abrirAuthDashboard()">
+            <span style="font-size: 1.4rem;">📊</span> Panel de Dirección
+        </button>
+    </div>
+</div>
+
+<div id="dashboard-view" class="card" style="display:none; background: #f0f4f8; padding: 0;">
+    
+    <div class="dash-header-sticky">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding: 0 20px;">
+            <div style="display:flex; align-items:center; gap: 15px;">
+                <button onclick="irInicio()" style="background:#ddd; color:#333;">⬅ Volver</button>
+                <h2 style="margin:0; color: var(--elecnor-blue);">Dashboard Analítico</h2>
+            </div>
+            <div style="text-align: right;">
+                <strong id="dash-fecha" style="color: #666; font-size: 14px;">---</strong>
+            </div>
+        </div>
+
+        <div class="dash-filtros" style="margin: 0 20px;">
+            <div>
+                <label>Arco / Zona</label>
+                <select id="dash-filtro-zona" onchange="renderDashboard()">
+                    <option value="TODOS">Todos los Arcos</option>
+                    <option value="ARCO1">Arco 1</option><option value="ARCO2">Arco 2</option><option value="ARCO3">Arco 3</option><option value="ARCO4">Arco 4</option><option value="ARCO5">Arco 5</option>
+                </select>
+            </div>
+            <div>
+                <label>Disciplina General</label>
+                <select id="dash-filtro-disc" onchange="renderDashboard()">
+                    <option value="TODOS">Todas las Disciplinas</option>
+                    <option value="MEC">Mecánica</option><option value="CIV">Civil</option><option value="ELE">Eléctrica</option>
+                </select>
+            </div>
+            <div><label>Desde Fecha</label><input type="date" id="dash-filtro-desde" onchange="renderDashboard()"></div>
+            <div><label>Hasta Fecha</label><input type="date" id="dash-filtro-hasta" onchange="renderDashboard()"></div>
+        </div>
+
+        <div style="display: flex; gap: 10px; padding: 0 20px; margin-top: 20px;">
+            <button id="btn-tab-prod" onclick="cambiarPestanaDash('prod')" style="flex: 1; background: var(--elecnor-blue); color: white; padding: 12px; border-radius: 6px; border: none; font-weight: bold; font-size: 14px;">📈 Producción y Avance</button>
+            <button id="btn-tab-cal" onclick="cambiarPestanaDash('cal')" style="flex: 1; background: #ddd; color: #555; padding: 12px; border-radius: 6px; border: none; font-weight: bold; font-size: 14px;">🛡️ Calidad y Repasos</button>
+        </div>
+    </div>
+
+    <div style="padding: 20px;">
+        
+        <div id="tab-prod">
+            <div class="dash-kpi-container">
+                <div class="kpi-box">
+                    <span class="kpi-val" id="kpi-real-prog" style="color: var(--success-green);">0.00%</span>
+                    <span class="kpi-label">Avance Global</span>
+                    <span class="kpi-subtext">Equipos Físicos Aprobados vs Totales</span>
+                    <div class="kpi-progress-bg"><div class="kpi-progress-fill" id="fill-real-prog" style="width: 0%; background: var(--success-green);"></div></div>
+                </div>
+                <div class="kpi-box" style="border-bottom: 4px solid var(--elecnor-blue);">
+                    <span class="kpi-val" id="kpi-ok">0 / 0</span>
+                    <span class="kpi-label">Volumen Aprobado (OK)</span>
+                    <span class="kpi-subtext">Suma de todas las sub-disciplinas filtradas</span>
+                </div>
+            </div>
+
+            <div class="dash-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="dash-card">
+                    <h3 class="chart-title" style="text-align:left;">📈 Curva de Producción (Últimos 30 días)</h3>
+                    <div style="position: relative; width: 100%; height: 250px;">
+                        <canvas id="chart-tendencia"></canvas>
+                    </div>
+                </div>
+                <div class="dash-card">
+                    <h3 class="chart-title" style="text-align:left;">📍 Avance Físico por Zona</h3>
+                    <div id="dash-zonas-progreso"></div>
+                </div>
+            </div>
+            
+            <div class="dash-card" style="margin-bottom: 20px;">
+                <h3 class="chart-title" style="text-align:left;">📋 Tabla de Alcance y Progreso Detallado</h3>
+                <div class="table-responsive">
+                    <table class="table-progreso" id="dash-tabla-alcance">
+                        <thead>
+                            <tr><th>Sub-disciplina (Tipo de Inspección)</th><th>Totales</th><th>Completados (OK)</th><th>Pendientes</th><th>Avance %</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-cal" style="display:none;">
+            <div class="dash-kpi-container">
+                <div class="kpi-box" style="border-bottom: 4px solid var(--danger-red);">
+                    <span class="kpi-val" id="kpi-nok-active" style="color: var(--danger-red);">0</span>
+                    <span class="kpi-label">Fallos Activos (Punchlist)</span>
+                    <span class="kpi-subtext">Equipos pendientes de revisar/reparar</span>
+                </div>
+                <div class="kpi-box" style="border-bottom: 4px solid var(--warning-orange);">
+                    <span class="kpi-val" id="kpi-quality" style="color: var(--warning-orange);">0.0</span>
+                    <span class="kpi-label">Índice de Esfuerzo (Rework)</span>
+                    <span class="kpi-subtext">Total Informes / Equipos Únicos (>1 = Repasos)</span>
+                </div>
+                <div class="kpi-box" style="border-bottom: 4px solid #6c757d;">
+                    <span class="kpi-val" id="kpi-inc" style="color: #6c757d;">0</span>
+                    <span class="kpi-label">Inspecciones Incompletas</span>
+                    <span class="kpi-subtext">Borradores en proceso</span>
+                </div>
+            </div>
+
+            <div class="dash-grid" style="grid-template-columns: 1fr 1fr;">
+                <div class="dash-card">
+                    <h3 class="chart-title">Salud de los Equipos Inspeccionados</h3>
+                    <div class="pie-chart-container" style="margin-bottom: 15px;">
+                        <div class="pie-chart" id="dash-pie"></div>
+                        <div class="pie-legend">
+                            <div class="legend-item"><div class="legend-color" style="background:var(--success-green);"></div> Aprobados (<span id="leg-ok">0%</span>)</div>
+                            <div class="legend-item"><div class="legend-color" style="background:var(--danger-red);"></div> Rechazados (<span id="leg-nok">0%</span>)</div>
+                            <div class="legend-item"><div class="legend-color" style="background:#6c757d;"></div> Incompletos (<span id="leg-inc">0%</span>)</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dash-card">
+                    <h3 class="chart-title">Top Supervisores (Volumen de Aprobados)</h3>
+                    <div id="dash-bar-sup"><p style="text-align:center; color:#999; margin-top: 40px;">Sin datos.</p></div>
+                </div>
+            </div>
+            
+            <div class="dash-card" style="margin-top: 20px;">
+                <h3 class="chart-title" style="color: var(--danger-red); text-align: left;">🔴 Top Defectos Más Comunes por Disciplina</h3>
+                <div class="dash-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 0;">
+                    <div>
+                        <h4 style="color: #333; margin-top: 0; text-align: center; border-bottom: 2px solid #ccc; padding-bottom: 5px;">MECÁNICA</h4>
+                        <div id="dash-top-def-mec"><p style="text-align:center; color:#999;">Sin defectos.</p></div>
+                    </div>
+                    <div>
+                        <h4 style="color: #333; margin-top: 0; text-align: center; border-bottom: 2px solid #ccc; padding-bottom: 5px;">CIVIL</h4>
+                        <div id="dash-top-def-civ"><p style="text-align:center; color:#999;">Sin defectos.</p></div>
+                    </div>
+                    <div>
+                        <h4 style="color: #333; margin-top: 0; text-align: center; border-bottom: 2px solid #ccc; padding-bottom: 5px;">ELÉCTRICA</h4>
+                        <div id="dash-top-def-ele"><p style="text-align:center; color:#999;">Sin defectos.</p></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<div id="listado" class="card" style="display:none;">
+    <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; margin-bottom:15px; gap: 10px;">
+        <div style="display:flex; align-items:center; gap: 15px;">
+            <button onclick="irInicio()" style="background:#eee; color:#333;">⬅ Inicio</button>
+            <h3 style="margin:0">Historial de Inspecciones</h3>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button onclick="exportarPunchlist()" style="background:var(--danger-red); color:white; display:flex; align-items:center; gap:5px;">
+                <span>📋</span> Descargar Punchlist
+            </button>
+            <button onclick="nuevaInspeccion()" style="background:var(--elecnor-blue); color:white;">+ Nueva Inspección</button>
+        </div>
+    </div>
+    <div class="filtros-grid">
+        <div><label>ID</label><input type="text" id="filtro-id" oninput="renderListado()"></div>
+        <div><label>Desde</label><input type="date" id="filtro-desde" onchange="renderListado()"></div>
+        <div><label>Hasta</label><input type="date" id="filtro-hasta" onchange="renderListado()"></div>
+        <div><label>Disc.</label><select id="filtro-disc" onchange="renderListado()"><option value="TODOS">Todas</option><option value="MEC">Mecánica</option><option value="CIV">Civil</option><option value="ELE">Eléctrica</option></select></div>
+        <div><label>Equipo</label><input type="text" id="filtro-equipo" oninput="renderListado()"></div>
+        <div><label>Supervisor</label><input type="text" id="filtro-sup" oninput="renderListado()"></div>
+        <div><label>Resultado</label><select id="filtro-res" onchange="renderListado()"><option value="TODOS">Todos</option><option value="OK">OK</option><option value="FALLO">Fallos</option><option value="INCOMPLETO">Incompletos</option></select></div>
+    </div>
+    <div class="table-responsive"><table id="tabla-listado"><thead><tr><th>ID</th><th>Fecha</th><th>Disciplina</th><th>Equipo</th><th>Supervisor</th><th>Resultado</th><th>Acciones</th></tr></thead><tbody></tbody></table></div>
+</div>
+
+<div id="checklist" class="card" style="display:none;">
+    <button onclick="irInicio()" style="background:#666; color:white; margin-bottom: 15px;">⬅ Cancelar y Volver</button>
+    <div class="sticky-container">
+        <div class="id-display"><span>ID: <span id="id-generado">---</span></span><span id="txt-progreso">0% Completado</span></div>
+        <div class="progress-wrapper"><div id="progreso-bar"></div></div>
+    </div>
+    <div class="grid-form-inspeccion">
+        <input type="hidden" id="edit-id" value="">
+        <input type="hidden" id="ins-revision" value="0">
+        <input type="hidden" id="ins-num-postes" value="11"> 
+        <div><label>Fecha</label><input type="date" id="ins-fecha"></div>
+        <div><label>Arco</label><select id="ins-zona" onchange="cambioZona()"><option value="ARCO1">Arco 1</option><option value="ARCO2">Arco 2</option><option value="ARCO3">Arco 3</option><option value="ARCO4">Arco 4</option><option value="ARCO5">Arco 5</option></select></div>
+        <div><label>Disciplina</label><select id="ins-disciplina" onchange="cambioDisciplina()"><option value="MEC">Mecánica</option><option value="CIV">Civil</option><option value="ELE">Eléctrica</option></select></div>
+        
+        <div id="div-sub-mec" style="display:none; grid-column: 1 / -1;">
+            <div class="sub-mec-grid">
+                <div>
+                    <label>Modelo Tracker PVH</label>
+                    <select id="ins-modelo-mec" onchange="cambioDisciplinaMecanica()">
+                        <option value="ROW 1-2 (MONOLINE 60M)">ROW 1-2 (MONOLINE 60M)</option>
+                        <option value="ROW 1A-1B 60M (7P+8P)">ROW 1A-1B 60M (7P+8P)</option>
+                        <option value="ROW 3-4 CENTRAL 120M (11P+12P)">ROW 3-4 CENTRAL 120M (11P+12P)</option>
+                        <option value="ROW 3-4 PERIMETER 2 120M (11P+12P)">ROW 3-4 PERIMETER 2 120M (11P+12P)</option>
+                        <option value="ROW 3-4 P1 NORTH 60M (6P+7P)">ROW 3-4 P1 NORTH 60M (6P+7P)</option>
+                        <option value="ROW 3-4 P1 NORTH 120M (11P+12P)">ROW 3-4 P1 NORTH 120M (11P+12P)</option>
+                        <option value="ROW 3-4 P1 SOUTH 60M (6P+7P)">ROW 3-4 P1 SOUTH 60M (6P+7P)</option>
+                        <option value="ROW 3-4 P1 SOUTH 120M (11P+12P)">ROW 3-4 P1 SOUTH 120M (11P+12P)</option>
+                        <option value="ROW 5-6 CENTRAL 120M (9P+10P)">ROW 5-6 CENTRAL 120M (9P+10P)</option>
+                        <option value="ROW 5-6 PERIMETER 2 120M (11P+12P)">ROW 5-6 PERIMETER 2 120M (11P+12P)</option>
+                        <option value="ROW 5-6 P1 NORTH 60M (6P+7P)">ROW 5-6 P1 NORTH 60M (6P+7P)</option>
+                        <option value="ROW 5-6 P1 NORTH 120M (10P+11P)">ROW 5-6 P1 NORTH 120M (10P+11P)</option>
+                        <option value="ROW 5-6 P1 SOUTH 60M (6P+7P)">ROW 5-6 P1 SOUTH 60M (6P+7P)</option>
+                        <option value="ROW 5-6 P1 SOUTH 120M (10P+11P)">ROW 5-6 P1 SOUTH 120M (10P+11P)</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Tipo de Fila</label>
+                    <select id="ins-fila-mec" onchange="cambioDisciplina()">
+                        <option value="MONOFILA">MONOFILA</option>
+                        <option value="MOTORA">MOTORA</option>
+                        <option value="GEMELA">GEMELA</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="div-sub-civil" style="display:none;"><label>Tipo Obra Civil</label><select id="ins-sub-civil" onchange="cambioDisciplina()"><option value="Vallado">Vallado</option><option value="Drenajes">Drenajes</option><option value="Caminos">Caminos</option></select></div>
+        <div id="div-sub-ele" style="display:none;"><label>Tipo Obra Eléctrica</label><select id="ins-sub-ele" onchange="cambioDisciplina()"><option value="Apertura de zanjas tendido de cable">Apertura de zanjas tendido de cable</option><option value="Tendido y conexionado de cable solar">Tendido y conexionado de cable solar</option><option value="Montaje de combiner box">Montaje de combiner box</option><option value="Conexionado cables MT">Conexionado cables MT</option></select></div>
+        
+        <div><label id="lbl-equipo">Equipo</label><input type="text" id="ins-equipo" oninput="actualizarID()"></div>
+        <div><label>Supervisor</label><input type="text" id="ins-supervisor"></div>
+        <div><label>Coordenadas GPS</label><div class="gps-container"><input type="text" id="ins-gps" readonly placeholder="Capturar GPS"><button onclick="obtenerGPS()" style="background:var(--elecnor-blue); color:white;">📍</button></div></div>
+    </div>
+    <hr style="margin:25px 0; border:0; border-top:1px solid #eee;">
+    <div id="contenedor-bloques"></div>
+    <div class="seccion-cierre">
+        <h3 style="margin:0 0 15px 0; color:var(--elecnor-blue); border-bottom:2px solid #eee; padding-bottom:10px;">Resumen y Firmas</h3>
+        <div class="resumen-final">
+            <div class="resumen-box"><strong style="color:var(--success-green)">PUNTOS OK</strong><br><span id="res-ok">0</span></div>
+            <div class="resumen-box"><strong style="color:var(--danger-red)">PUNTOS NO OK</strong><br><span id="res-nok">0</span></div>
+            <div class="resumen-box"><strong style="color:var(--warning-orange)">INCOMPLETOS</strong><br><span id="res-inc">0</span></div>
+        </div>
+        <div class="signature-container">
+            <div class="signature-pad"><span class="sig-label">FIRMA SUPERVISOR ELECNOR</span><canvas id="pad-supervisor" class="firma"></canvas><button class="btn-clear" onclick="clearSig('pad-supervisor')">Limpiar</button></div>
+            <div class="signature-pad"><span class="sig-label">FIRMA PROPIEDAD / CLIENTE</span><canvas id="pad-propiedad" class="firma"></canvas><button class="btn-clear" onclick="clearSig('pad-propiedad')">Limpiar</button></div>
+        </div>
+    </div>
+    <div class="contenedor-botones-guardar">
+        <button onclick="guardarYContinuar()" style="background:var(--elecnor-blue); color:white; flex: 1; padding:15px; font-size:16px;">💾 GUARDAR Y CONTINUAR RUTA</button>
+        <button onclick="guardarInspeccion()" style="background:var(--success-green); color:white; flex: 1; padding:15px; font-size:16px;">✅ FINALIZAR Y SALIR</button>
+    </div>
+</div>
+
+<script src="app.js"></script>
+
+</body>
+</html>
