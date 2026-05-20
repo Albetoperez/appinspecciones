@@ -15,6 +15,44 @@ async function sha256(str) {
 
 
 
+function calcularEquiposUnicos(allReports) {
+    const uniqueEquip = {};
+    allReports.forEach(ins => {
+        const baseId = ins.id.split('-R')[0];
+        const sub = ins.subDisciplina || 'MEC';
+        const uniqueKey = `${ins.disciplina}-${sub}-${baseId}`;
+        const rev = ins.revision || 0;
+        if (!uniqueEquip[uniqueKey] || rev >= (uniqueEquip[uniqueKey].revision || 0)) uniqueEquip[uniqueKey] = ins;
+    });
+    return Object.values(uniqueEquip);
+}
+
+function calcularKPIs(uniqueList) {
+    let stOk = 0, stNok = 0, stInc = 0;
+    uniqueList.forEach(ins => {
+        if (!ins.checklist) return;
+        const hasPend = ins.checklist.some(c => c.estado === 'PENDIENTE');
+        const hasNok = ins.checklist.some(c => c.estado === 'NOK');
+        if (hasPend) stInc++;
+        else if (hasNok) stNok++;
+        else stOk++;
+    });
+    return { stOk, stNok, stInc, total: uniqueList.length };
+}
+
+function calcularRitmo7Dias(uniqueList) {
+    const hace7DiasObj = new Date();
+    hace7DiasObj.setDate(hace7DiasObj.getDate() - 7);
+    const fechaLimite = hace7DiasObj.toISOString().split('T')[0];
+    let aprobadosSemana = 0;
+    uniqueList.forEach(ins => {
+        if (!ins.checklist) return;
+        const isOk = !ins.checklist.some(c => c.estado === 'NOK' || c.estado === 'PENDIENTE');
+        if (isOk && ins.fecha >= fechaLimite) aprobadosSemana++;
+    });
+    return { ritmoDiario: aprobadosSemana / 7, aprobadosSemana };
+}
+
 let chartTendencia = null, chartZonas = null, chartDoughnut = null, chartSuper = null, chartDefMEC = null, chartDefCIV = null, chartDefELE = null;
 let listSortCol = 'idInterno'; let listSortDir = -1; let listPage = 1; let listPerPage = 25; let listLastFiltered = [];
 
@@ -129,27 +167,17 @@ async function renderDashboard() {
         return true;
     });
 
-    const uniqueEquip = {};
-    allReports.forEach(ins => {
-        const baseId = ins.id.split('-R')[0];
-        const sub = ins.subDisciplina || 'MEC';
-        const uniqueKey = `${ins.disciplina}-${sub}-${baseId}`;
-        const rev = ins.revision || 0;
-        if (!uniqueEquip[uniqueKey] || rev >= (uniqueEquip[uniqueKey].revision || 0)) uniqueEquip[uniqueKey] = ins;
-    });
-    const uniqueList = Object.values(uniqueEquip);
+    const uniqueList = calcularEquiposUnicos(allReports);
 
-    let stOk = 0, stNok = 0, stInc = 0;
-    const supervisorCounts = {};
+    const kpi = calcularKPIs(uniqueList);
+    let stOk = kpi.stOk, stNok = kpi.stNok, stInc = kpi.stInc;
+
     const defectMEC = {}, defectCIV = {}, defectELE = {};
 
     uniqueList.forEach(ins => {
-        let hasPend = false, hasNok = false;
         if (ins.checklist) {
             ins.checklist.forEach(c => {
-                if (c.estado === 'PENDIENTE') hasPend = true;
                 if (c.estado === 'NOK') {
-                    hasNok = true;
                     const defKey = `${c.titulo.replace(/^Poste \d+ - |^Vano \d+-\d+: /, '').substring(0, 40)}`;
                     if (ins.disciplina === 'MEC') defectMEC[defKey] = (defectMEC[defKey] || 0) + 1;
                     if (ins.disciplina === 'CIV') defectCIV[defKey] = (defectCIV[defKey] || 0) + 1;
@@ -157,9 +185,6 @@ async function renderDashboard() {
                 }
             });
         }
-        if (hasPend) stInc++; else if (hasNok) stNok++; else stOk++;
-        if (ins.supervisor) supervisorCounts[ins.supervisor] = (supervisorCounts[ins.supervisor] || 0) + (stOk > 0 ? 1 : 0);
-        if (ins.supervisor && !hasPend && !hasNok) supervisorCounts[ins.supervisor] = (supervisorCounts[ins.supervisor] || 0);
     });
 
     // Recalculate supervisor OK counts correctly
@@ -242,27 +267,7 @@ async function renderDashboard() {
     if (elKpiTasa) elKpiTasa.innerText = tasaAprobacion + '%';
 
 // === INICIO MEJORA: CÁLCULO DE VELOCIDAD Y FECHA ESTIMADA ===
-    const hoyObj = new Date();
-    const hace7DiasObj = new Date();
-    hace7DiasObj.setDate(hoyObj.getDate() - 7);
-
-    // Formateamos la fecha límite (hace 7 días) a YYYY-MM-DD
-    const fechaLimite = hace7DiasObj.getFullYear() + '-' + 
-                        String(hace7DiasObj.getMonth() + 1).padStart(2, '0') + '-' + 
-                        String(hace7DiasObj.getDate()).padStart(2, '0');
-
-    let aprobadosSemana = 0;
-    uniqueList.forEach(ins => {
-        if (!ins.checklist) return;
-        // Comprobamos si el equipo está OK (sin fallos ni pendientes)
-        const estaRealmenteOk = !ins.checklist.some(c => c.estado === 'NOK' || c.estado === 'PENDIENTE');
-        // Si está OK y es de los últimos 7 días, lo sumamos
-        if (estaRealmenteOk && ins.fecha >= fechaLimite) {
-            aprobadosSemana++;
-        }
-    });
-
-    const ritmoDiario = aprobadosSemana / 7;
+    const { ritmoDiario } = calcularRitmo7Dias(uniqueList);
     const unidadesPendientes = Math.max(0, totalMetaGlobal - totalOkGlobal);
     let textoFechaFin = "---";
 
@@ -714,6 +719,18 @@ function cambiarPestanaDash(tab) {
     if(document.getElementById('btn-tab-lib'))  document.getElementById('btn-tab-lib').className  = 'dash-tab' + (tab === 'lib'  ? ' dash-tab-active' : '');
 }
 function imprimirDashboard() { window.print(); }
+
+function mostrarCarga(mensaje = 'Procesando...') {
+    const overlay = document.createElement('div');
+    overlay.id = 'overlay-carga';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;color:white;font-size:1.5rem;font-family:Segoe UI,sans-serif;';
+    overlay.textContent = mensaje;
+    document.body.appendChild(overlay);
+}
+function ocultarCarga() {
+    const overlay = document.getElementById('overlay-carga');
+    if (overlay) overlay.remove();
+}
 
 
 function irInicio() { document.getElementById('checklist').style.display='none'; document.getElementById('listado').style.display='none'; document.getElementById('dashboard-view').style.display='none'; document.getElementById('portada').style.display='flex'; }
@@ -1593,6 +1610,8 @@ function extraerDatosActuales() {
     return tempList.length > 0 ? tempList : null;
 }
 
+let writeLock = false;
+
 async function guardarDatosCore() { 
     const eq = document.getElementById('ins-equipo').value.trim();
     const sup = document.getElementById('ins-supervisor').value.trim(); 
@@ -1601,6 +1620,12 @@ async function guardarDatosCore() {
         alert("⚠️ Completa Equipo y Supervisor antes de guardar."); 
         return false; 
     } 
+    
+    if (writeLock) {
+        console.warn('Escritura bloqueada por otra operación en curso, reintentando...');
+        return false;
+    }
+    writeLock = true;
     
     // Aquí empieza nuestro "Airbag" (try/catch)
     try {
@@ -1635,6 +1660,8 @@ async function guardarDatosCore() {
         console.error("Error crítico al guardar en la base de datos:", error);
         alert("❌ Ocurrió un error al intentar guardar la inspección. Comprueba el almacenamiento de tu dispositivo e inténtalo de nuevo.");
         return false;
+    } finally {
+        writeLock = false;
     }
 }
 
@@ -2101,9 +2128,10 @@ function initAnotacion() {
     c.addEventListener('touchend', () => dibujandoAnotacion = false);
 }
 async function generarPDF(idI) {
+    mostrarCarga('Generando PDF...');
     const data = await localforage.getItem('inspecciones_data');
     const ins  = data[idI];
-    if (!ins) { alert('No se encontró la inspección.'); return; }
+    if (!ins) { ocultarCarga(); alert('No se encontró la inspección.'); return; }
 
     const doc = new jsPDF('landscape', 'mm', 'a4');
     const PW  = doc.internal.pageSize.width;   // 297
@@ -2467,32 +2495,24 @@ async function generarPDF(idI) {
 
         addPageFooter();
     }
+    ocultarCarga();
     doc.save(ins.id + '.pdf');
 }
 
-
 async function exportarPunchlist() {
+    mostrarCarga('Generando Excel...');
     try {
         const dataObj = await localforage.getItem('inspecciones_data') || {};
         const allReports = Object.values(dataObj);
 
         if (allReports.length === 0) {
+            ocultarCarga();
             alert("No hay inspecciones registradas.");
             return;
         }
 
         // --- 1. LÓGICA DE DATOS GENERAL ---
-        const uniqueEquip = {};
-        allReports.forEach(ins => {
-            const baseId = ins.id.split('-R')[0];
-            const sub = ins.subDisciplina || "MEC";
-            const uniqueKey = `${ins.disciplina}-${sub}-${baseId}`;
-            const rev = ins.revision || 0;
-            if (!uniqueEquip[uniqueKey] || rev >= (uniqueEquip[uniqueKey].revision || 0)) {
-                uniqueEquip[uniqueKey] = ins;
-            }
-        });
-        const uniqueList = Object.values(uniqueEquip);
+        const uniqueList = calcularEquiposUnicos(allReports);
 
         // Datos del punchlist (NOK + PENDIENTE)
         const punchlistItems = [];
@@ -2512,29 +2532,14 @@ async function exportarPunchlist() {
         });
 
         // KPIs globales
-        let stOk = 0, stNok = 0, stInc = 0;
-        uniqueList.forEach(ins => {
-            if (!ins.checklist) return;
-            const hasPend = ins.checklist.some(c => c.estado === 'PENDIENTE');
-            const hasNok  = ins.checklist.some(c => c.estado === 'NOK');
-            if (hasPend) stInc++; else if (hasNok) stNok++; else stOk++;
-        });
-        const totalUnicos = uniqueList.length;
+        const kpi = calcularKPIs(uniqueList);
+        const stOk = kpi.stOk, stNok = kpi.stNok, stInc = kpi.stInc;
+        const totalUnicos = kpi.total;
         const pctCalidad = totalUnicos > 0 ? Math.round((stOk / totalUnicos) * 100) : 0;
         const rework = totalUnicos > 0 ? (allReports.length / totalUnicos).toFixed(2) : '0.00';
 
         // Lógica Ritmo 7 días
-        const hoyObj = new Date();
-        const hace7DiasObj = new Date();
-        hace7DiasObj.setDate(hoyObj.getDate() - 7);
-        const fechaLimite = hace7DiasObj.toISOString().split('T')[0];
-        let aprobadosSemana = 0;
-        uniqueList.forEach(ins => {
-            if (!ins.checklist) return;
-            const isOk = !ins.checklist.some(c => c.estado === 'NOK' || c.estado === 'PENDIENTE');
-            if (isOk && ins.fecha >= fechaLimite) aprobadosSemana++;
-        });
-        const ritmoDiario = aprobadosSemana / 7;
+        const { ritmoDiario } = calcularRitmo7Dias(uniqueList);
 
         // Resumen por zona
         const zonasLabels = ['ARCO1','ARCO2','ARCO3','ARCO4','ARCO5'];
@@ -3141,6 +3146,7 @@ async function exportarPunchlist() {
              nombreProyectoSeguro = configGeneral.proyecto.replace(/\s+/g,'_');
         }
         
+        ocultarCarga();
         a.download = `SIGMA_INFORME_${nombreProyectoSeguro}_${fechaStr}.xlsx`;
         document.body.appendChild(a);
         a.click();
@@ -3148,12 +3154,19 @@ async function exportarPunchlist() {
         window.URL.revokeObjectURL(url);
 
     } catch (error) {
+        ocultarCarga();
         console.error("Error generando el Excel:", error);
         alert("Hubo un error al exportar el Excel: " + error.message);
     }
 }
 
-function abrirIndicePlanos() {
-    window.open('planos/indice.pdf', '_blank');
+async function abrirIndicePlanos() {
+    try {
+        const resp = await fetch('planos/indice.pdf', { method: 'HEAD' });
+        if (resp.ok) window.open('planos/indice.pdf', '_blank');
+        else alert('El índice de planos aún no está disponible.');
+    } catch {
+        alert('No se pudo cargar el índice de planos.');
+    }
 }
 initApp();
