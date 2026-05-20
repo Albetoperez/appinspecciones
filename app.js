@@ -1,6 +1,18 @@
 const { jsPDF } = window.jspdf;
 localforage.config({ name: 'ElecnorApp_v24', storeName: 'inspecciones_db' });
 
+function esc(str) {
+    if (!str) return '';
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+}
+
+async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
 
 
 let chartTendencia = null, chartZonas = null, chartDoughnut = null, chartSuper = null, chartDefMEC = null, chartDefCIV = null, chartDefELE = null;
@@ -76,8 +88,15 @@ async function guardarAjustes() {
 }
 
 function abrirAuthDashboard() { document.getElementById('input-pin').value = ''; document.getElementById('modalAuth').style.display = 'flex'; }
-function verificarPin() { 
-    if (document.getElementById('input-pin').value === "2013") { 
+async function verificarPin() { 
+    const pinIngresado = document.getElementById('input-pin').value;
+    let pinGuardado = await localforage.getItem('dash_pin_hash');
+    if (!pinGuardado) {
+        pinGuardado = await sha256("2013");
+        await localforage.setItem('dash_pin_hash', pinGuardado);
+    }
+    const hashIngresado = await sha256(pinIngresado);
+    if (hashIngresado === pinGuardado) { 
         document.getElementById('modalAuth').style.display = 'none'; 
         renderDashboard(); 
     } else alert("PIN Incorrecto."); 
@@ -1025,7 +1044,7 @@ function cargarChecklist(datosExistentes = null, esSubsanacion = false) {
                     let firstObs = '';
                     let firstFoto = '';
 
-                    html += `<tr><td class="item-desc">${itemDesc}</td>`;
+                    html += `<tr><td class="item-desc">${esc(itemDesc)}</td>`;
                     for(let p=1; p<=numPostes; p++) {
                         const desc = `Poste ${p} - ${itemDesc}`;
                         let resp = {estado: 'PENDIENTE', obs: '', foto: ''};
@@ -1058,7 +1077,7 @@ function cargarChecklist(datosExistentes = null, esSubsanacion = false) {
                         <td colspan="${numPostes + 1}" style="text-align: left; padding: 6px;">
                             <div style="display:flex; gap: 8px; align-items:center;">
                                 <span style="font-size:10px; font-weight:bold; color:#555; white-space:nowrap;">📋 Obs. Global:</span>
-                                <textarea id="${sharedObsId}" placeholder="Anotar observaciones que apliquen a todos los pilares de este ítem...">${firstObs}</textarea>
+                                <textarea id="${sharedObsId}" placeholder="Anotar observaciones que apliquen a todos los pilares de este ítem...">${esc(firstObs)}</textarea>
                                 <div style="flex-shrink:0;">
                                     <input type="file" accept="image/*" style="display:none;" id="${sharedFileId}" onchange="procesarFotoParaAnotar(this, '${sharedImgId}')">
                                     <button type="button" onclick="document.getElementById('${sharedFileId}').click()" style="font-size: 14px; padding: 4px 10px; background: #e2eaf0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; color:var(--elecnor-blue); font-weight:bold; display:flex; align-items:center; height:32px;">📸 FOTO</button>
@@ -1067,7 +1086,7 @@ function cargarChecklist(datosExistentes = null, esSubsanacion = false) {
                             <div id="status-${sharedImgId}" style="display:${firstFoto?'block':'none'}; color:var(--success-green); font-size:11px; font-weight:bold; margin-top:5px; background:#e9f7ef; padding:4px 8px; border-radius:4px; border:1px solid #c3e6cb; width:fit-content;">
                                 ✅ Archivo incluido
                             </div>
-                            <img src="${firstFoto}" class="foto-preview" id="${sharedImgId}" style="display:none;" onclick="verGrande(this.src)">
+                            <img src="${esc(firstFoto)}" class="foto-preview" id="${sharedImgId}" style="display:none;" onclick="verGrande(this.src)">
                         </td>
                     </tr>`;
                 });
@@ -1168,7 +1187,7 @@ function cargarChecklist(datosExistentes = null, esSubsanacion = false) {
                     <td colspan="6" style="text-align: left; padding: 6px;">
                         <div style="display:flex; gap: 8px; align-items:center;">
                             <span style="font-size:10px; font-weight:bold; color:#555; white-space:nowrap;">📋 Obs. Global:</span>
-                            <textarea id="${sharedObsId}" placeholder="Anotar observaciones sobre las distancias de hincas...">${firstObs}</textarea>
+                            <textarea id="${sharedObsId}" placeholder="Anotar observaciones sobre las distancias de hincas...">${esc(firstObs)}</textarea>
                             <div style="flex-shrink:0;">
                                 <input type="file" accept="image/*" style="display:none;" id="${sharedFileId}" onchange="procesarFotoParaAnotar(this, '${sharedImgId}')">
                                 <button type="button" onclick="document.getElementById('${sharedFileId}').click()" style="font-size: 14px; padding: 4px 10px; background: #e2eaf0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; color:var(--elecnor-blue); font-weight:bold; display:flex; align-items:center; height:32px;">📸 FOTO</button>
@@ -1177,7 +1196,7 @@ function cargarChecklist(datosExistentes = null, esSubsanacion = false) {
                         <div id="status-${sharedImgId}" style="display:${firstFoto?'block':'none'}; color:var(--success-green); font-size:11px; font-weight:bold; margin-top:5px; background:#e9f7ef; padding:4px 8px; border-radius:4px; border:1px solid #c3e6cb; width:fit-content;">
                             ✅ Archivo incluido
                         </div>
-                        <img src="${firstFoto}" class="foto-preview" id="${sharedImgId}" style="display:none;" onclick="verGrande(this.src)">
+                        <img src="${esc(firstFoto)}" class="foto-preview" id="${sharedImgId}" style="display:none;" onclick="verGrande(this.src)">
                     </td>
                 </tr>`;
 
@@ -1201,10 +1220,10 @@ function cargarChecklist(datosExistentes = null, esSubsanacion = false) {
                     let firstFoto = '';
 
                     html += `<tr><td class="item-desc" style="white-space:normal; line-height:1.4; padding:6px;">
-                        <span style="color:var(--elecnor-blue); font-weight:900; font-size:11px; display:block; margin-bottom:3px;">${item.desc}</span>
+                        <span style="color:var(--elecnor-blue); font-weight:900; font-size:11px; display:block; margin-bottom:3px;">${esc(item.desc)}</span>
                         <span style="font-weight:normal; font-size:9px; color:#555;">
-                            <b>Tipo:</b> ${item.tipo} | <b>M:</b> ${item.metrica}mm<br>
-                            <b>Torque:</b> <span style="color:var(--danger-red); font-weight:bold;">${item.torque} N.m</span> | <b>Tol:</b> ${item.tol}
+                            <b>Tipo:</b> ${esc(item.tipo)} | <b>M:</b> ${esc(item.metrica)}mm<br>
+                            <b>Torque:</b> <span style="color:var(--danger-red); font-weight:bold;">${esc(item.torque)} N.m</span> | <b>Tol:</b> ${esc(item.tol)}
                         </span>
                     </td>`;
                     
@@ -1285,7 +1304,7 @@ function cargarChecklist(datosExistentes = null, esSubsanacion = false) {
                         <td colspan="${numPostes + 1}" style="text-align: left; padding: 6px;">
                             <div style="display:flex; gap: 8px; align-items:center;">
                                 <span style="font-size:10px; font-weight:bold; color:#555; white-space:nowrap;">📋 Obs. Global:</span>
-                                <textarea id="${sharedObsId}" placeholder="Anotar observaciones de los pares de apriete para este elemento...">${firstObs}</textarea>
+                                <textarea id="${sharedObsId}" placeholder="Anotar observaciones de los pares de apriete para este elemento...">${esc(firstObs)}</textarea>
                                 <div style="flex-shrink:0;">
                                     <input type="file" accept="image/*" style="display:none;" id="${sharedFileId}" onchange="procesarFotoParaAnotar(this, '${sharedImgId}')">
                                     <button type="button" onclick="document.getElementById('${sharedFileId}').click()" style="font-size: 14px; padding: 4px 10px; background: #e2eaf0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; color:var(--elecnor-blue); font-weight:bold; display:flex; align-items:center; height:32px;">📸 FOTO</button>
@@ -1294,7 +1313,7 @@ function cargarChecklist(datosExistentes = null, esSubsanacion = false) {
                             <div id="status-${sharedImgId}" style="display:${firstFoto?'block':'none'}; color:var(--success-green); font-size:11px; font-weight:bold; margin-top:5px; background:#e9f7ef; padding:4px 8px; border-radius:4px; border:1px solid #c3e6cb; width:fit-content;">
                                 ✅ Archivo incluido
                             </div>
-                            <img src="${firstFoto}" class="foto-preview" id="${sharedImgId}" style="display:none;" onclick="verGrande(this.src)">
+                            <img src="${esc(firstFoto)}" class="foto-preview" id="${sharedImgId}" style="display:none;" onclick="verGrande(this.src)">
                         </td>
                     </tr>`;
                 });
@@ -1318,10 +1337,10 @@ function cargarChecklist(datosExistentes = null, esSubsanacion = false) {
                     let firstFoto = '';
 
                     html += `<tr><td class="item-desc" style="white-space:normal; line-height:1.4; padding:6px;">
-                        <span style="color:var(--elecnor-blue); font-weight:900; font-size:11px; display:block; margin-bottom:3px;">${item.desc}</span>
+                        <span style="color:var(--elecnor-blue); font-weight:900; font-size:11px; display:block; margin-bottom:3px;">${esc(item.desc)}</span>
                         <span style="font-weight:normal; font-size:9px; color:#555;">
-                            <b>Ref:</b> <span style="color:var(--danger-red); font-weight:bold;">${item.ref}</span><br>
-                            <b>Tol:</b> ${item.tol} | <b>Rango:</b> ${item.rango}
+                            <b>Ref:</b> <span style="color:var(--danger-red); font-weight:bold;">${esc(item.ref)}</span><br>
+                            <b>Tol:</b> ${esc(item.tol)} | <b>Rango:</b> ${esc(item.rango)}
                         </span>
                     </td>`;
                     
@@ -1455,7 +1474,7 @@ function cargarChecklist(datosExistentes = null, esSubsanacion = false) {
                         <td colspan="${numPostes + 1}" style="text-align: left; padding: 6px;">
                             <div style="display:flex; gap: 8px; align-items:center;">
                                 <span style="font-size:10px; font-weight:bold; color:#555; white-space:nowrap;">📋 Obs. Global:</span>
-                                <textarea id="${sharedObsId}" placeholder="Anotar observaciones para estas verificaciones...">${firstObs}</textarea>
+                                <textarea id="${sharedObsId}" placeholder="Anotar observaciones para estas verificaciones...">${esc(firstObs)}</textarea>
                                 <div style="flex-shrink:0;">
                                     <input type="file" accept="image/*" style="display:none;" id="${sharedFileId}" onchange="procesarFotoParaAnotar(this, '${sharedImgId}')">
                                     <button type="button" onclick="document.getElementById('${sharedFileId}').click()" style="font-size: 14px; padding: 4px 10px; background: #e2eaf0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; color:var(--elecnor-blue); font-weight:bold; display:flex; align-items:center; height:32px;">📸 FOTO</button>
@@ -1464,7 +1483,7 @@ function cargarChecklist(datosExistentes = null, esSubsanacion = false) {
                             <div id="status-${sharedImgId}" style="display:${firstFoto?'block':'none'}; color:var(--success-green); font-size:11px; font-weight:bold; margin-top:5px; background:#e9f7ef; padding:4px 8px; border-radius:4px; border:1px solid #c3e6cb; width:fit-content;">
                                 ✅ Archivo incluido
                             </div>
-                            <img src="${firstFoto}" class="foto-preview" id="${sharedImgId}" style="display:none;" onclick="verGrande(this.src)">
+                            <img src="${esc(firstFoto)}" class="foto-preview" id="${sharedImgId}" style="display:none;" onclick="verGrande(this.src)">
                         </td>
                     </tr>`;
                 });
@@ -1481,9 +1500,9 @@ function cargarChecklist(datosExistentes = null, esSubsanacion = false) {
                     
                     const selColorClass = resp.estado !== 'PENDIENTE' ? resp.estado.toLowerCase() : '';
 
-                    html += `<div class="inspeccion-item" data-bloque="${bloqueLogico}" data-desc="${desc}" style="background: white; padding: 12px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 8px;">
+                    html += `                        <div class="inspeccion-item" data-bloque="${bloqueLogico}" data-desc="${desc}" style="background: white; padding: 12px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 8px;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px; gap: 10px;">
-                            <span style="font-weight:bold; color:var(--elecnor-blue); font-size:12px; flex-grow:1;">${desc}</span>
+                            <span style="font-weight:bold; color:var(--elecnor-blue); font-size:12px; flex-grow:1;">${esc(desc)}</span>
                             <select id="sel-${contador}" class="select-estado ${selColorClass}" onchange="this.className='select-estado '+this.value.toLowerCase(); actualizarProgreso();" style="width: 110px; padding: 8px; font-size: 11px; flex-shrink:0;">
                                 <option value="PENDIENTE" ${resp.estado==='PENDIENTE'?'selected':''} hidden>-</option>
                                 <option value="ok" ${resp.estado==='OK'?'selected':''}>OK</option>
@@ -1493,7 +1512,7 @@ function cargarChecklist(datosExistentes = null, esSubsanacion = false) {
                         </div>
                         <div style="display:flex; gap: 8px; align-items:center;">
                             <span style="font-size:10px; font-weight:bold; color:#555; white-space:nowrap;">📋 Obs:</span>
-                            <textarea id="obs-${contador}" placeholder="Anotar observaciones..." style="flex-grow:1; height:32px; padding:6px; font-size:11px; border:1px solid #ccc; border-radius:4px; resize:vertical; box-sizing:border-box;">${resp.obs}</textarea>
+                            <textarea id="obs-${contador}" placeholder="Anotar observaciones..." style="flex-grow:1; height:32px; padding:6px; font-size:11px; border:1px solid #ccc; border-radius:4px; resize:vertical; box-sizing:border-box;">${esc(resp.obs)}</textarea>
                             <div style="flex-shrink:0;">
                                 <input type="file" accept="image/*" style="display:none;" id="file-${contador}" onchange="procesarFotoParaAnotar(this, 'prev-${contador}')">
                                 <button type="button" onclick="document.getElementById('file-${contador}').click()" style="font-size: 14px; padding: 4px 10px; background: #e2eaf0; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; color:var(--elecnor-blue); font-weight:bold; display:flex; align-items:center; height:32px;">📸 FOTO</button>
@@ -1502,7 +1521,7 @@ function cargarChecklist(datosExistentes = null, esSubsanacion = false) {
                         <div id="status-prev-${contador}" style="display:${resp.foto?'block':'none'}; color:var(--success-green); font-size:11px; font-weight:bold; margin-top:8px; background:#e9f7ef; padding:4px 8px; border-radius:4px; border:1px solid #c3e6cb; width:fit-content;">
                             ✅ Archivo incluido
                         </div>
-                        <img src="${resp.foto}" class="foto-preview" id="prev-${contador}" style="display:none;">
+                        <img src="${esc(resp.foto)}" class="foto-preview" id="prev-${contador}" style="display:none;">
                     </div>`;
                     contador++;
                 });
