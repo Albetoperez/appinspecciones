@@ -48,9 +48,26 @@ function calcularRitmo7Dias(uniqueList) {
     uniqueList.forEach(ins => {
         if (!ins.checklist) return;
         const isOk = !ins.checklist.some(c => c.estado === 'NOK' || c.estado === 'PENDIENTE');
-        if (isOk && ins.fecha >= fechaLimite) aprobadosSemana++;
+        if (isOk && fechaGte(ins.fecha, fechaLimite)) aprobadosSemana++;
     });
     return { ritmoDiario: aprobadosSemana / 7, aprobadosSemana };
+}
+
+function parseFecha(str) {
+    if (!str) return null;
+    const partes = str.split('-').map(Number);
+    if (partes.length !== 3) return null;
+    return new Date(partes[0], partes[1] - 1, partes[2]);
+}
+function fechaGte(a, b) {
+    const da = parseFecha(a), db = parseFecha(b);
+    if (!da || !db) return false;
+    return da >= db;
+}
+function fechaLte(a, b) {
+    const da = parseFecha(a), db = parseFecha(b);
+    if (!da || !db) return false;
+    return da <= db;
 }
 
 let chartTendencia = null, chartZonas = null, chartDoughnut = null, chartSuper = null, chartDefMEC = null, chartDefCIV = null, chartDefELE = null;
@@ -532,7 +549,7 @@ async function renderDashboard() {
         const hasNok = ins.checklist.some(c => c.estado === 'NOK');
         if (hasNok && heatmapData[ins.zona]) {
             for (let w = 0; w < 4; w++) {
-                if (ins.fecha >= weekRanges[w].inicio && ins.fecha <= weekRanges[w].fin) {
+                if (fechaGte(ins.fecha, weekRanges[w].inicio) && fechaLte(ins.fecha, weekRanges[w].fin)) {
                     heatmapData[ins.zona][w]++;
                     break;
                 }
@@ -664,19 +681,29 @@ function renderDefectChart(canvasId, dataMap, color) {
     const sorted = Object.entries(dataMap).sort((a, b) => b[1] - a[1]).slice(0, 5);
     const canvas = document.getElementById(canvasId);
     if (!canvas) return;
+    const container = canvas.parentElement;
 
-    // Destroy existing chart on this canvas if any
     const existing = Chart.getChart(canvas);
     if (existing) existing.destroy();
 
+    const msgKey = 'defect-empty-msg';
+    const oldMsg = container.querySelector('.' + msgKey);
     if (sorted.length === 0) {
-        canvas.parentElement.innerHTML = '<p style="text-align:center; color:#bbb; padding:20px; font-size:12px;">Sin defectos registrados.</p>';
+        canvas.style.display = 'none';
+        if (!oldMsg) {
+            const msg = document.createElement('p');
+            msg.className = msgKey;
+            msg.style.cssText = 'text-align:center; color:#bbb; padding:20px; font-size:12px;';
+            msg.textContent = 'Sin defectos registrados.';
+            container.appendChild(msg);
+        }
         return;
     }
+    if (oldMsg) oldMsg.remove();
+    canvas.style.display = 'block';
 
     const labels = sorted.map(e => e[0].length > 30 ? e[0].substring(0, 30) + '…' : e[0]);
     const values = sorted.map(e => e[1]);
-    const alphaColor = color + '22';
 
     new Chart(canvas.getContext('2d'), {
         type: 'bar',
@@ -779,9 +806,11 @@ function initPads() {
 }
 
 function clearSig(id) { 
-    pads[id].ctx.clearRect(0,0,pads[id].canvas.width,pads[id].canvas.height); 
-    pads[id].ctx.beginPath(); 
-    padsTocados[id] = false; // Se marca como no tocado al limpiar
+    const pad = pads[id];
+    if (!pad) return;
+    pad.ctx.clearRect(0, 0, pad.canvas.width, pad.canvas.height); 
+    pad.ctx.beginPath(); 
+    padsTocados[id] = false;
 }
 function actualizarProgreso() {
     const total = document.querySelectorAll('.inspeccion-item').length;
@@ -1921,7 +1950,7 @@ async function reinspeccionar(idOld) {
     document.getElementById('dashboard-view').style.display='none'; 
     document.getElementById('checklist').style.display='block';
     
-    document.getElementById('ins-fecha').valueAsDate = new Date(); 
+    document.getElementById('ins-fecha').value = new Date().toISOString().split('T')[0]; 
     document.getElementById('ins-zona').value = ins.zona; 
     document.getElementById('ins-disciplina').value = ins.disciplina;
     if (ins.disciplina === 'MEC' && ins.subDisciplina) {
@@ -1953,7 +1982,7 @@ function nuevaInspeccion() {
     document.getElementById('listado').style.display='none'; 
     document.getElementById('dashboard-view').style.display='none'; 
     document.getElementById('checklist').style.display='block'; 
-    document.getElementById('ins-fecha').valueAsDate = new Date(); 
+    document.getElementById('ins-fecha').value = new Date().toISOString().split('T')[0]; 
     cambioDisciplinaMecanica(); 
     setTimeout(initPads, 200); 
 }
@@ -2147,7 +2176,9 @@ async function generarPDF(idI) {
                 const blob = await r.blob();
                 logoB64 = await new Promise(res => { const fr = new FileReader(); fr.onloadend = () => res(fr.result); fr.readAsDataURL(blob); });
             }
-        } catch(e) {}
+        } catch(e) {
+            console.warn('No se pudo cargar el logo:', e);
+        }
     }
 
     // ── Funciones helper ──────────────────────────────────────────────
@@ -2667,7 +2698,7 @@ async function exportarPunchlist() {
         kpiTitle.font = boldFont(12, C_BLUE); kpiTitle.alignment = lftAlign; kpiTitle.fill = hdrFill('FFE2EAF0');
         kpiTitle.border = { left:{style:'thick',color:{argb:C_BLUE}} }; wsRes.getRow(4).height = 24;
 
-        const kpiHeaders = ['Total Equipos\nInspeccionados', 'Aprobados\n(OK)', 'Con Fallos\n(NOK activo)', 'Incompletos', '% Calidad\n(sin fallos)', 'Total Informes\n(con repasos)', 'Índice\nRework', 'Defectos\nAbiertos'];
+        const kpiHeaders = ['Total Equipos\nInspeccionados', 'Aprobados\n(OK)', 'Con Fallos\n(NOK activo)', 'Incompletos', '% Calidad\n(sin fallos)', 'Total Informes\n(con repasos)', 'Informes\n/ Equipo', 'Defectos\nAbiertos'];
         const kpiValues  = [totalUnicos, stOk, stNok, stInc, pctCalidad+'%', allReports.length, rework, punchlistItems.filter(p=>p.estado==='NOK').length];
         const kpiHdrRow = wsRes.getRow(5);
         kpiHeaders.forEach((h,i) => {
@@ -2855,7 +2886,7 @@ async function exportarPunchlist() {
                     const dI = new Date(); dI.setDate(dI.getDate() - ((3 - w) * 7) - 6);
                     const sIni = dI.toISOString().split('T')[0];
                     const sFin = dF.toISOString().split('T')[0];
-                    counts[w] = uniqueList.filter(ins => ins.disciplina === disc && ins.zona === z && ins.fecha >= sIni && ins.fecha <= sFin && ins.checklist.some(c => c.estado === 'NOK')).length;
+                    counts[w] = uniqueList.filter(ins => ins.disciplina === disc && ins.zona === z && fechaGte(ins.fecha, sIni) && fechaLte(ins.fecha, sFin) && ins.checklist.some(c => c.estado === 'NOK')).length;
                 }
                 const r = wsHeat.addRow([z, ...counts]);
                 r.getCell(1).font = boldFont(10, C_BLUE); r.getCell(1).border = allBorders; r.getCell(1).alignment = ctrAlign; r.getCell(1).fill = hdrFill(C_LGRAY);
