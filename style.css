@@ -106,16 +106,6 @@ button:active { transform: translateY(1px); }
 /* ── FORMULARIO DE INSPECCIÓN ─────────────────────────────── */
 #checklist { background: #eef2f7; padding: 0; border-radius: 0; box-shadow: none; }
 
-.checklist-back-btn {
-    background: rgba(255,255,255,0.15);
-    color: white;
-    border: 1px solid rgba(255,255,255,0.3);
-    padding: 8px 16px;
-    font-size: 13px;
-    border-radius: 6px;
-    font-weight: 600;
-}
-
 .sticky-container {
     position: sticky;
     top: 0;

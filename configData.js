@@ -118,7 +118,7 @@ const v120mSouth56Motora = crearVanos([8200,8200,8200,8700,6600,6800,6800,6800,6
 const v120mSouth56Gemela = crearVanos([8200,8200,8200,8000,700,6600,6800,6800,6800,6100]);
 
 const configVanosPVH = {
-    "ROW 1-2 (MONOLINE 60M)": { "MONOFILA": { nominal: 0, tolerancia: 20, vanos: v120mMotora } },
+    "ROW 1-2 (MONOLINE 60M)": { "MONOFILA": { nominal: 0, tolerancia: 20, vanos: v60mNorthMotora } },
     "ROW 1A-1B 60M (7P+8P)": { "MOTORA": { nominal: 0, tolerancia: 20, vanos: v60m1A1BMotora }, "GEMELA": { nominal: 0, tolerancia: 20, vanos: v60m1A1BGemela } },
     "ROW 3-4 CENTRAL 120M (11P+12P)": { "MOTORA": { nominal: 0, tolerancia: 20, vanos: v120mMotora }, "GEMELA": { nominal: 0, tolerancia: 20, vanos: v120mGemela } },
     "ROW 3-4 P1 NORTH 60M (6P+7P)": { "MOTORA": { nominal: 0, tolerancia: 20, vanos: v60mNorthMotora }, "GEMELA": { nominal: 0, tolerancia: 20, vanos: v60mNorthGemela } },
