@@ -33,11 +33,11 @@
 </div>
 
 <div id="modalAlerta" class="modal-overlay" style="z-index: 3000;">
-    <div class="modal-content" style="text-align: center; max-width: 320px; padding: 30px 20px;">
-        <div id="alerta-icono" style="font-size: 40px; margin-bottom: 10px;">⚠️</div>
-        <h3 id="alerta-titulo" style="margin-top:0; color:var(--danger-red);">Atención Requerida</h3>
-        <p id="texto-alerta" style="color: #555; font-size: 14px; line-height: 1.5;"></p>
-        <button id="alerta-btn" onclick="document.getElementById('modalAlerta').style.display='none'" style="background:var(--elecnor-blue); color:white; width:100%; margin-top:15px; padding: 12px;">Entendido</button>
+    <div class="modal-content modal-auth-content">
+        <div id="alerta-icono" class="alerta-icono">⚠️</div>
+        <h3 id="alerta-titulo" class="alerta-titulo">Atención Requerida</h3>
+        <p id="texto-alerta" class="alerta-texto"></p>
+        <button id="alerta-btn" onclick="document.getElementById('modalAlerta').style.display='none'" class="btn-full-primary" style="background:var(--elecnor-blue);">Entendido</button>
     </div>
 </div>
 
@@ -58,7 +58,7 @@
     </div>
 </div>
 
-<div id="modalAjustes" class="modal-overlay">
+<div id="modalAjustes" class="modal-overlay" style="z-index: 2000;">
     <div class="modal-content">
         <h3 style="margin-top:0; color:var(--elecnor-blue);">Configuración del Proyecto</h3>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -94,12 +94,7 @@
             </table>
         </div>
 
-        <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-        <label>Logo Corporativo</label>
-        <input type="file" id="conf-logo-input" accept="image/*" onchange="cargarLogoAjustes(this)" style="width: 100%; border: none;">
-        <div style="margin-top:10px; text-align:center;">
-            <img id="conf-logo-preview" style="max-height: 50px; max-width: 100%; display: none; border: 1px solid #ccc; padding: 5px; border-radius: 4px;">
-        </div>
+       
         <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
             <button onclick="document.getElementById('modalAjustes').style.display='none'" style="background:#ccc; color:#333;">Cancelar</button>
             <button onclick="guardarAjustes()" style="background:var(--elecnor-blue); color:white;">Guardar Cambios</button>
@@ -119,7 +114,6 @@
         <button onclick="abrirIndicePlanos()" style="background: var(--elecnor-blue); color: white; display: flex; align-items: center; gap: 6px; font-size: 14px; padding: 8px 15px;" title="Consultar Índice de Planos">
             <span style="font-size: 1.2rem;">📚</span> Planos
         </button>
-        <button onclick="abrirAjustes()" style="background: transparent; font-size: 1.5rem; padding: 0; box-shadow: none;" title="Ajustes de la App">⚙️</button>
     </div>
 </header>
 
@@ -131,31 +125,43 @@
     </div>
     <div class="portada-botones">
         <button class="btn-portada btn-portada-primary" onclick="nuevaInspeccion()">
-            <span style="font-size: 1.4rem;">📝</span> Crear Informe
+            <span style="font-size:1.5rem;">&#128221;</span>
+            <span><strong style="display:block; font-size:1rem;">Crear Informe</strong><small style="font-weight:400; opacity:0.85; font-size:0.72rem;">Nueva inspecci&#243;n de campo</small></span>
         </button>
         <button class="btn-portada btn-portada-primary" onclick="mostrarHistorial()">
-            <span style="font-size: 1.4rem;">🗂️</span> Ver Historial
+            <span style="font-size:1.5rem;">&#128193;</span>
+            <span><strong style="display:block; font-size:1rem;">Ver Historial</strong><small style="font-weight:400; opacity:0.85; font-size:0.72rem;">Consultar y exportar inspecciones</small></span>
         </button>
         <button class="btn-portada btn-portada-primary" onclick="abrirAuthDashboard()">
-            <span style="font-size: 1.4rem;">📊</span> Panel de Dirección
+            <span style="font-size:1.5rem;">&#128202;</span>
+            <span><strong style="display:block; font-size:1rem;">Panel de Direcci&#243;n</strong><small style="font-weight:400; opacity:0.85; font-size:0.72rem;">KPIs, gr&#225;ficas y seguimiento</small></span>
         </button>
     </div>
+   
 </div>
 
-<div id="dashboard-view" class="card" style="display:none; background: #f0f4f8; padding: 0;">
-    
+<div id="dashboard-view" style="display:none; background:#eef2f7; min-height:100vh; padding:0; border-radius:0; box-shadow:none;">
+
     <div class="dash-header-sticky">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding: 0 20px;">
-            <div style="display:flex; align-items:center; gap: 15px;">
-                <button onclick="irInicio()" style="background:#ddd; color:#333;">⬅ Volver</button>
-                <h2 style="margin:0; color: var(--elecnor-blue);">Dashboard Analítico</h2>
+        <div class="dash-header-top">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <button onclick="irInicio()" class="btn-dash-back">&#8592; Volver</button>
+                <div>
+                    <div style="font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:#aaa; font-weight:700;">Panel de Control Ejecutivo</div>
+                    <h2 style="margin:0; color:var(--elecnor-blue); font-size:1.2rem; line-height:1.2;" id="dash-proyecto-title">SIGMA &mdash; PARQUE FOTOVOLTAICO</h2>
+                </div>
             </div>
-            <div style="text-align: right;">
-                <strong id="dash-fecha" style="color: #666; font-size: 14px;">---</strong>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div style="text-align:right; padding-right:12px; border-right:1px solid #ddd;">
+                    <div style="font-size:10px; color:#aaa; text-transform:uppercase; font-weight:700; letter-spacing:0.5px;">Fecha de Reporte</div>
+                    <strong id="dash-fecha" style="color:#333; font-size:13px;">---</strong>
+                </div>
+                <button onclick="abrirAjustes()" class="btn-dash-print" style="border-color: rgba(255, 152, 0, 0.5); color: var(--warning-orange);">⚙️ Metas Obra</button>
+                <button onclick="imprimirDashboard()" class="btn-dash-print">&#128438; Imprimir</button>
             </div>
         </div>
 
-        <div class="dash-filtros" style="margin: 0 20px;">
+        <div class="dash-filtros-bar">
             <div>
                 <label>Arco / Zona</label>
                 <select id="dash-filtro-zona" onchange="renderDashboard()">
@@ -164,59 +170,99 @@
                 </select>
             </div>
             <div>
-                <label>Disciplina General</label>
+                <label>Disciplina</label>
                 <select id="dash-filtro-disc" onchange="renderDashboard()">
                     <option value="TODOS">Todas las Disciplinas</option>
-                    <option value="MEC">Mecánica</option><option value="CIV">Civil</option><option value="ELE">Eléctrica</option>
+                    <option value="MEC">Mec&#225;nica</option><option value="CIV">Civil</option><option value="ELE">El&#233;ctrica</option>
                 </select>
             </div>
-            <div><label>Desde Fecha</label><input type="date" id="dash-filtro-desde" onchange="renderDashboard()"></div>
-            <div><label>Hasta Fecha</label><input type="date" id="dash-filtro-hasta" onchange="renderDashboard()"></div>
+            <div><label>Desde</label><input type="date" id="dash-filtro-desde" onchange="renderDashboard()"></div>
+            <div><label>Hasta</label><input type="date" id="dash-filtro-hasta" onchange="renderDashboard()"></div>
         </div>
 
-        <div style="display: flex; gap: 10px; padding: 0 20px; margin-top: 20px;">
-            <button id="btn-tab-prod" onclick="cambiarPestanaDash('prod')" style="flex: 1; background: var(--elecnor-blue); color: white; padding: 12px; border-radius: 6px; border: none; font-weight: bold; font-size: 14px;">📈 Producción y Avance</button>
-            <button id="btn-tab-cal" onclick="cambiarPestanaDash('cal')" style="flex: 1; background: #ddd; color: #555; padding: 12px; border-radius: 6px; border: none; font-weight: bold; font-size: 14px;">🛡️ Calidad y Repasos</button>
+        <div class="dash-tabs">
+            <button id="btn-tab-prod" class="dash-tab dash-tab-active" onclick="cambiarPestanaDash('prod')">&#128200; Producci&#243;n &amp; Avance</button>
+            <button id="btn-tab-cal" class="dash-tab" onclick="cambiarPestanaDash('cal')">&#128737; Calidad &amp; Fallos</button>
+	    <button id="btn-tab-lib" class="dash-tab" onclick="cambiarPestanaDash('lib')">🏗️ Liberaciones</button>
         </div>
     </div>
 
-    <div style="padding: 20px;">
-        
+    <div class="dash-content">
+
         <div id="tab-prod">
-            <div class="dash-kpi-container">
-                <div class="kpi-box">
-                    <span class="kpi-val" id="kpi-real-prog" style="color: var(--success-green);">0.00%</span>
-                    <span class="kpi-label">Avance Global</span>
-                    <span class="kpi-subtext">Equipos Físicos Aprobados vs Totales</span>
-                    <div class="kpi-progress-bg"><div class="kpi-progress-fill" id="fill-real-prog" style="width: 0%; background: var(--success-green);"></div></div>
+            <div class="exec-kpi-row">
+                <div class="exec-kpi exec-kpi-green">
+                    <div class="exec-kpi-icon">&#9989;</div>
+                    <div class="exec-kpi-body">
+                        <div class="exec-kpi-val" id="kpi-real-prog">0.00%</div>
+                        <div class="exec-kpi-label">Avance Global</div>
+                        <div class="exec-kpi-sub">Equipos aprobados vs totales</div>
+                    </div>
+                    <div class="exec-kpi-progress-wrap"><div class="exec-kpi-progress-fill" id="fill-real-prog" style="width:0%; background:var(--success-green);"></div></div>
                 </div>
-                <div class="kpi-box" style="border-bottom: 4px solid var(--elecnor-blue);">
-                    <span class="kpi-val" id="kpi-ok">0 / 0</span>
-                    <span class="kpi-label">Volumen Aprobado (OK)</span>
-                    <span class="kpi-subtext">Suma de todas las sub-disciplinas filtradas</span>
+                <div class="exec-kpi exec-kpi-blue">
+                    <div class="exec-kpi-icon">&#128295;</div>
+                    <div class="exec-kpi-body">
+                        <div class="exec-kpi-val" id="kpi-ok">0</div>
+                        <div class="exec-kpi-label">Equipos Aprobados</div>
+                        <div class="exec-kpi-sub">Estado OK sin fallos</div>
+                    </div>
+                </div>
+                <div class="exec-kpi exec-kpi-orange">
+                    <div class="exec-kpi-icon">&#8987;</div>
+                    <div class="exec-kpi-body">
+                        <div class="exec-kpi-val" id="kpi-pendientes-prod">0</div>
+                        <div class="exec-kpi-label">Pendientes</div>
+                        <div class="exec-kpi-sub">A&#250;n por inspeccionar</div>
+                    </div>
+                </div>
+                <div class="exec-kpi exec-kpi-gray">
+                    <div class="exec-kpi-icon">&#128196;</div>
+                    <div class="exec-kpi-body">
+                        <div class="exec-kpi-val" id="kpi-total-informes">0</div>
+                        <div class="exec-kpi-label">Total Informes</div>
+                        <div class="exec-kpi-sub">Incluyendo revisiones</div>
+                    </div>
+                </div>
+                
+                <div class="exec-kpi" style="border-top-color: #9c27b0; grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: center; gap: 20px;">
+                    <div class="exec-kpi-icon" style="font-size: 32px;">⏱️</div>
+                    <div class="exec-kpi-body" style="flex-grow: 0; text-align: center;">
+                        <div class="exec-kpi-label" style="font-size: 13px;">Ritmo de inspección (Últimos 7 días)</div>
+                        <div style="display: flex; gap: 30px; align-items: baseline; justify-content: center; margin-top: 8px;">
+                            <div class="exec-kpi-val" id="kpi-velocidad" style="font-size: 1.8rem; color: #005596;">0.0 eq/día</div>
+                            <div id="kpi-fecha-fin" style="color: #9c27b0; font-weight: 900; font-size: 16px; padding: 4px 12px; background: #f3e5f5; border-radius: 6px;">Fin est.: ---</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="dash-grid-2">
+                <div class="exec-card">
+                    <div class="exec-card-header">
+                        <div class="exec-card-title">Evoluci&#243;n de Calidad (First Time Yield)</div>
+                                                            <div class="exec-card-sub">Aprobados vs. Rechazos por d&#237;a &mdash; &#218;ltimos 30 d&#237;as</div>
+                    </div>
+                    <div class="exec-chart-wrap"><canvas id="chart-tendencia"></canvas></div>
+                </div>
+                <div class="exec-card">
+                    <div class="exec-card-header">
+                        <div class="exec-card-title">Avance por Zona</div>
+                        <div class="exec-card-sub">% completado sobre el total objetivo por arco</div>
+                    </div>
+                    <div class="exec-chart-wrap"><canvas id="chart-zonas"></canvas></div>
                 </div>
             </div>
 
-            <div class="dash-grid" style="grid-template-columns: 1fr 1fr;">
-                <div class="dash-card">
-                    <h3 class="chart-title" style="text-align:left;">📈 Curva de Producción (Últimos 30 días)</h3>
-                    <div style="position: relative; width: 100%; height: 250px;">
-                        <canvas id="chart-tendencia"></canvas>
-                    </div>
+            <div class="exec-card">
+                <div class="exec-card-header">
+                    <div class="exec-card-title">Tabla de Alcance y Progreso Detallado</div>
+                    <div class="exec-card-sub">Por sub-disciplina de inspecci&#243;n</div>
                 </div>
-                <div class="dash-card">
-                    <h3 class="chart-title" style="text-align:left;">📍 Avance Físico por Zona</h3>
-                    <div id="dash-zonas-progreso"></div>
-                </div>
-            </div>
-            
-            <div class="dash-card" style="margin-bottom: 20px;">
-                <h3 class="chart-title" style="text-align:left;">📋 Tabla de Alcance y Progreso Detallado</h3>
                 <div class="table-responsive">
-                    <table class="table-progreso" id="dash-tabla-alcance">
-                        <thead>
-                            <tr><th>Sub-disciplina (Tipo de Inspección)</th><th>Totales</th><th>Completados (OK)</th><th>Pendientes</th><th>Avance %</th></tr>
-                        </thead>
+                    <table class="exec-table" id="dash-tabla-alcance">
+                        <thead><tr><th>Sub-disciplina</th><th>Meta Total</th><th>Aprobados</th><th>Pendientes</th><th>Avance</th></tr></thead>
                         <tbody></tbody>
                     </table>
                 </div>
@@ -224,91 +270,254 @@
         </div>
 
         <div id="tab-cal" style="display:none;">
-            <div class="dash-kpi-container">
-                <div class="kpi-box" style="border-bottom: 4px solid var(--danger-red);">
-                    <span class="kpi-val" id="kpi-nok-active" style="color: var(--danger-red);">0</span>
-                    <span class="kpi-label">Fallos Activos (Punchlist)</span>
-                    <span class="kpi-subtext">Equipos pendientes de revisar/reparar</span>
+            <div class="exec-kpi-row">
+                <div class="exec-kpi exec-kpi-red">
+                    <div class="exec-kpi-icon">&#128680;</div>
+                    <div class="exec-kpi-body">
+                        <div class="exec-kpi-val" id="kpi-nok-active">0</div>
+                        <div class="exec-kpi-label">Fallos Activos</div>
+                        <div class="exec-kpi-sub">Equipos rechazados (NOK)</div>
+                    </div>
                 </div>
-                <div class="kpi-box" style="border-bottom: 4px solid var(--warning-orange);">
-                    <span class="kpi-val" id="kpi-quality" style="color: var(--warning-orange);">0.0</span>
-                    <span class="kpi-label">Índice de Esfuerzo (Rework)</span>
-                    <span class="kpi-subtext">Total Informes / Equipos Únicos (>1 = Repasos)</span>
+                <div class="exec-kpi exec-kpi-orange">
+                    <div class="exec-kpi-icon">&#128260;</div>
+                    <div class="exec-kpi-body">
+                        <div class="exec-kpi-val" id="kpi-quality">0.0</div>
+                        <div class="exec-kpi-label">&#205;ndice Rework</div>
+                        <div class="exec-kpi-sub">Informes / Equipos &#250;nicos</div>
+                    </div>
                 </div>
-                <div class="kpi-box" style="border-bottom: 4px solid #6c757d;">
-                    <span class="kpi-val" id="kpi-inc" style="color: #6c757d;">0</span>
-                    <span class="kpi-label">Inspecciones Incompletas</span>
-                    <span class="kpi-subtext">Borradores en proceso</span>
+                <div class="exec-kpi exec-kpi-gray">
+                    <div class="exec-kpi-icon">&#128221;</div>
+                    <div class="exec-kpi-body">
+                        <div class="exec-kpi-val" id="kpi-inc">0</div>
+                        <div class="exec-kpi-label">Incompletos</div>
+                        <div class="exec-kpi-sub">Borradores en proceso</div>
+                    </div>
+                </div>
+                <div class="exec-kpi exec-kpi-green">
+                    <div class="exec-kpi-icon">&#127942;</div>
+                    <div class="exec-kpi-body">
+                        <div class="exec-kpi-val" id="kpi-tasa-aprobacion">0%</div>
+                        <div class="exec-kpi-label">Tasa de Aprobaci&#243;n</div>
+                        <div class="exec-kpi-sub">OK / Total equipos &#250;nicos</div>
+                    </div>
                 </div>
             </div>
 
-            <div class="dash-grid" style="grid-template-columns: 1fr 1fr;">
-                <div class="dash-card">
-                    <h3 class="chart-title">Salud de los Equipos Inspeccionados</h3>
-                    <div class="pie-chart-container" style="margin-bottom: 15px;">
-                        <div class="pie-chart" id="dash-pie"></div>
-                        <div class="pie-legend">
-                            <div class="legend-item"><div class="legend-color" style="background:var(--success-green);"></div> Aprobados (<span id="leg-ok">0%</span>)</div>
-                            <div class="legend-item"><div class="legend-color" style="background:var(--danger-red);"></div> Rechazados (<span id="leg-nok">0%</span>)</div>
-                            <div class="legend-item"><div class="legend-color" style="background:#6c757d;"></div> Incompletos (<span id="leg-inc">0%</span>)</div>
+            <div class="dash-grid-2">
+                <div class="exec-card">
+                    <div class="exec-card-header">
+                        <div class="exec-card-title">Salud Global de Equipos</div>
+                        <div class="exec-card-sub">Estado de todos los equipos inspeccionados</div>
+                    </div>
+                    <div class="exec-chart-wrap exec-doughnut-container">
+                        <canvas id="chart-doughnut"></canvas>
+                        <div id="doughnut-center" class="doughnut-center-label">
+                            <div id="doughnut-center-val" class="doughnut-center-val">-</div>
+                            <div id="doughnut-center-sub" class="doughnut-center-sub">Aprobados</div>
                         </div>
                     </div>
                 </div>
-                <div class="dash-card">
-                    <h3 class="chart-title">Top Supervisores (Volumen de Aprobados)</h3>
-                    <div id="dash-bar-sup"><p style="text-align:center; color:#999; margin-top: 40px;">Sin datos.</p></div>
+                <div class="exec-card">
+                    <div class="exec-card-header">
+                        <div class="exec-card-title">Rendimiento por Supervisor</div>
+                        <div class="exec-card-sub">Equipos aprobados totales por inspector</div>
+                    </div>
+                    <div class="exec-chart-wrap"><canvas id="chart-super"></canvas></div>
                 </div>
             </div>
-            
-            <div class="dash-card" style="margin-top: 20px;">
-                <h3 class="chart-title" style="color: var(--danger-red); text-align: left;">🔴 Top Defectos Más Comunes por Disciplina</h3>
-                <div class="dash-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom: 0;">
+
+            <div class="exec-card">
+                <div class="exec-card-header">
+                    <div class="exec-card-title" style="color:var(--danger-red);">Top Defectos por Disciplina</div>
+                    <div class="exec-card-sub">Los 5 fallos m&#225;s frecuentes en cada &#225;rea de inspecci&#243;n</div>
+                </div>
+                <div class="dash-grid-3" style="margin-top:15px; gap:25px;">
                     <div>
-                        <h4 style="color: #333; margin-top: 0; text-align: center; border-bottom: 2px solid #ccc; padding-bottom: 5px;">MECÁNICA</h4>
-                        <div id="dash-top-def-mec"><p style="text-align:center; color:#999;">Sin defectos.</p></div>
+                        <div class="exec-def-header exec-def-mec">&#9881; MEC&#193;NICA</div>
+                        <div class="exec-chart-wrap" style="height:190px;"><canvas id="chart-def-mec"></canvas></div>
                     </div>
                     <div>
-                        <h4 style="color: #333; margin-top: 0; text-align: center; border-bottom: 2px solid #ccc; padding-bottom: 5px;">CIVIL</h4>
-                        <div id="dash-top-def-civ"><p style="text-align:center; color:#999;">Sin defectos.</p></div>
+                        <div class="exec-def-header exec-def-civ">&#127959; CIVIL</div>
+                        <div class="exec-chart-wrap" style="height:190px;"><canvas id="chart-def-civ"></canvas></div>
                     </div>
                     <div>
-                        <h4 style="color: #333; margin-top: 0; text-align: center; border-bottom: 2px solid #ccc; padding-bottom: 5px;">ELÉCTRICA</h4>
-                        <div id="dash-top-def-ele"><p style="text-align:center; color:#999;">Sin defectos.</p></div>
+                        <div class="exec-def-header exec-def-ele">&#9889; EL&#201;CTRICA</div>
+                        <div class="exec-chart-wrap" style="height:190px;"><canvas id="chart-def-ele"></canvas></div>
                     </div>
                 </div>
             </div>
 
+            <div class="exec-card" style="margin-top: 20px;">
+                <div class="exec-card-header">
+                    <div class="exec-card-title">Mapa de Calor de Defectos (Últimas 4 semanas)</div>
+                    <div class="exec-card-sub">Concentración de fallos (NOK) por Zona a lo largo del tiempo. Verde = 0 defectos.</div>
+                </div>
+                <div class="table-responsive" id="heatmap-container" style="margin-top: 10px;">
+                    </div>
+            </div>
         </div>
+
+        <div id="tab-lib" style="display:none;">
+            <div class="exec-kpi-row">
+                <div class="exec-kpi exec-kpi-blue">
+                    <div class="exec-kpi-icon">⚙️</div>
+                    <div class="exec-kpi-body">
+                        <div class="exec-kpi-val" id="kpi-lib-total">0</div>
+                        <div class="exec-kpi-label">Trackers MEC</div>
+                        <div class="exec-kpi-sub">Total inspeccionados</div>
+                    </div>
+                </div>
+                <div class="exec-kpi exec-kpi-green">
+                    <div class="exec-kpi-icon">✅</div>
+                    <div class="exec-kpi-body">
+                        <div class="exec-kpi-val" id="kpi-lib-ok">0</div>
+                        <div class="exec-kpi-label">Liberado Total</div>
+                        <div class="exec-kpi-sub">H1 + H2 + H3 OK</div>
+                    </div>
+                </div>
+                <div class="exec-kpi" style="border-top-color: #00b0f0;">
+                    <div class="exec-kpi-icon">🟦</div>
+                    <div class="exec-kpi-body">
+                        <div class="exec-kpi-val" id="kpi-lib-apt">0</div>
+                        <div class="exec-kpi-label">Aptos Paneles</div>
+                        <div class="exec-kpi-sub">H1 + H2 OK</div>
+                    </div>
+                </div>
+                <div class="exec-kpi exec-kpi-red">
+                    <div class="exec-kpi-icon">⛔</div>
+                    <div class="exec-kpi-body">
+                        <div class="exec-kpi-val" id="kpi-lib-nok">0</div>
+                        <div class="exec-kpi-label">Bloqueados</div>
+                        <div class="exec-kpi-sub">Con fallos NOK</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+<div class="dash-grid-2" style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 0 10px;">
+        <div class="exec-card" style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); min-height: 300px;">
+            <div class="exec-card-header"><div class="exec-card-title" style="font-weight: bold; color: #005596;">📊 Estado Global</div></div>
+            <div style="height: 250px; position: relative;">
+                <canvas id="chart-lib-doughnut"></canvas>
+            </div>
+        </div>
+        <div class="exec-card" style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); min-height: 300px;">
+            <div class="exec-card-header"><div class="exec-card-title" style="font-weight: bold; color: #005596;">🗺️ Liberaciones por Zona</div></div>
+            <div style="height: 250px; position: relative;">
+                <canvas id="chart-lib-zonas"></canvas>
+            </div>
+        </div>
+    </div>
     </div>
 </div>
 
-<div id="listado" class="card" style="display:none;">
-    <div style="display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; margin-bottom:15px; gap: 10px;">
-        <div style="display:flex; align-items:center; gap: 15px;">
-            <button onclick="irInicio()" style="background:#eee; color:#333;">⬅ Inicio</button>
-            <h3 style="margin:0">Historial de Inspecciones</h3>
+<div id="listado" style="display:none; background:#eef2f7; min-height:100vh; padding:0; border-radius:0; box-shadow:none;">
+
+    <div class="hist-header">
+        <div style="display:flex; align-items:center; gap:15px;">
+            <button onclick="irInicio()" class="btn-dash-back">&#8592; Inicio</button>
+            <div>
+                <div style="font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:rgba(255,255,255,0.6); font-weight:700;">M&#243;dulo de Seguimiento</div>
+                <h2 style="margin:0; color:white; font-size:1.2rem; line-height:1.2;">Historial de Inspecciones</h2>
+            </div>
         </div>
-        <div style="display:flex; gap:10px;">
-            <button onclick="exportarPunchlist()" style="background:var(--danger-red); color:white; display:flex; align-items:center; gap:5px;">
-                <span>📋</span> Descargar Punchlist
-            </button>
-            <button onclick="nuevaInspeccion()" style="background:var(--elecnor-blue); color:white;">+ Nueva Inspección</button>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <button onclick="exportarPunchlist()" class="btn-hist-punch">&#128203; Punchlist</button>
+            <button onclick="nuevaInspeccion()" class="btn-hist-new">+ Nueva Inspecci&#243;n</button>
         </div>
     </div>
-    <div class="filtros-grid">
-        <div><label>ID</label><input type="text" id="filtro-id" oninput="renderListado()"></div>
+
+    <div class="hist-filtros-bar">
+        <div><label>ID / Referencia</label><input type="text" id="filtro-id" oninput="renderListado()" placeholder="Buscar por ID..."></div>
         <div><label>Desde</label><input type="date" id="filtro-desde" onchange="renderListado()"></div>
         <div><label>Hasta</label><input type="date" id="filtro-hasta" onchange="renderListado()"></div>
-        <div><label>Disc.</label><select id="filtro-disc" onchange="renderListado()"><option value="TODOS">Todas</option><option value="MEC">Mecánica</option><option value="CIV">Civil</option><option value="ELE">Eléctrica</option></select></div>
-        <div><label>Equipo</label><input type="text" id="filtro-equipo" oninput="renderListado()"></div>
-        <div><label>Supervisor</label><input type="text" id="filtro-sup" oninput="renderListado()"></div>
-        <div><label>Resultado</label><select id="filtro-res" onchange="renderListado()"><option value="TODOS">Todos</option><option value="OK">OK</option><option value="FALLO">Fallos</option><option value="INCOMPLETO">Incompletos</option></select></div>
+        <div>
+            <label>Disciplina</label>
+            <select id="filtro-disc" onchange="renderListado()">
+                <option value="TODOS">Todas</option>
+                <option value="MEC">Mec&#225;nica</option>
+                <option value="CIV">Civil</option>
+                <option value="ELE">El&#233;ctrica</option>
+            </select>
+        </div>
+        <div><label>Equipo</label><input type="text" id="filtro-equipo" oninput="renderListado()" placeholder="Buscar equipo..."></div>
+        <div><label>Supervisor</label><input type="text" id="filtro-sup" oninput="renderListado()" placeholder="Nombre..."></div>
+        <div>
+            <label>Resultado</label>
+            <select id="filtro-res" onchange="renderListado()">
+                <option value="TODOS">Todos</option>
+                <option value="OK">OK</option>
+                <option value="FALLO">Fallos</option>
+                <option value="INCOMPLETO">Incompletos</option>
+            </select>
+        </div>
+        <div style="display:flex; align-items:flex-end;">
+            <button onclick="limpiarFiltrosHistorial()" class="btn-hist-clear">&#10005; Limpiar</button>
+        </div>
     </div>
-    <div class="table-responsive"><table id="tabla-listado"><thead><tr><th>ID</th><th>Fecha</th><th>Disciplina</th><th>Equipo</th><th>Supervisor</th><th>Resultado</th><th>Acciones</th></tr></thead><tbody></tbody></table></div>
+
+    <div class="hist-content">
+        <div class="exec-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+                <div>
+                    <div class="exec-card-title">Registros de Inspecci&#243;n</div>
+                    <div class="exec-card-sub" id="hist-counter">Cargando...</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:11px; color:#888; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Mostrar:</span>
+                    <button id="btn-pp-25" class="btn-perpage btn-perpage-active" onclick="setPerPage(25)">25</button>
+                    <button id="btn-pp-50" class="btn-perpage" onclick="setPerPage(50)">50</button>
+                    <button id="btn-pp-100" class="btn-perpage" onclick="setPerPage(100)">100</button>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table id="tabla-listado" class="exec-table hist-table">
+                    <thead>
+                        <tr>
+                            <th class="th-sortable" onclick="sortListado('id')" title="Ordenar por ID">
+                                ID / Ref. <span class="sort-icon" id="sort-id"></span>
+                            </th>
+                            <th class="th-sortable" onclick="sortListado('fecha')" title="Ordenar por Fecha">
+                                Fecha <span class="sort-icon" id="sort-fecha">&#9660;</span>
+                            </th>
+                            <th class="th-sortable" onclick="sortListado('disciplina')" title="Ordenar por Disciplina">
+                                Disciplina <span class="sort-icon" id="sort-disciplina"></span>
+                            </th>
+                            <th class="th-sortable" onclick="sortListado('equipo')" title="Ordenar por Equipo">
+                                Equipo <span class="sort-icon" id="sort-equipo"></span>
+                            </th>
+                            <th class="th-sortable" onclick="sortListado('supervisor')" title="Ordenar por Supervisor">
+                                Supervisor <span class="sort-icon" id="sort-supervisor"></span>
+                            </th>
+                            <th class="th-sortable" onclick="sortListado('resultado')" title="Ordenar por Resultado">Resultado <span class="sort-icon" id="sort-resultado"></span></th>
+                            <th style="text-align:center;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="hist-pagination" id="hist-pagination">
+                <button id="btn-pag-prev" class="btn-pag-nav" onclick="cambiarPagina(-1)" disabled>&#8592; Anterior</button>
+                <div id="hist-pag-pages" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+                <button id="btn-pag-next" class="btn-pag-nav" onclick="cambiarPagina(1)">Siguiente &#8594;</button>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div id="checklist" class="card" style="display:none;">
-    <button onclick="irInicio()" style="background:#666; color:white; margin-bottom: 15px;">⬅ Cancelar y Volver</button>
+<div id="checklist" style="display:none; background:#eef2f7; min-height:100vh; padding:0; border-radius:0; box-shadow:none;">
+    <div class="form-inspeccion-header">
+        <div style="display:flex; align-items:center; gap:14px;">
+            <button onclick="irInicio()" class="btn-dash-back">&#8592; Cancelar</button>
+            <div>
+                <div style="font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:rgba(255,255,255,0.6); font-weight:700;">Nuevo Informe</div>
+                <div style="font-size:1.1rem; font-weight:800; color:white;">Formulario de Inspecci&#243;n</div>
+            </div>
+        </div>
+    </div>
     <div class="sticky-container">
         <div class="id-display"><span>ID: <span id="id-generado">---</span></span><span id="txt-progreso">0% Completado</span></div>
         <div class="progress-wrapper"><div id="progreso-bar"></div></div>
@@ -363,7 +572,7 @@
     <hr style="margin:25px 0; border:0; border-top:1px solid #eee;">
     <div id="contenedor-bloques"></div>
     <div class="seccion-cierre">
-        <h3 style="margin:0 0 15px 0; color:var(--elecnor-blue); border-bottom:2px solid #eee; padding-bottom:10px;">Resumen y Firmas</h3>
+        <h3 style="margin:0 0 18px 0; color:var(--elecnor-blue); border-bottom:2px solid #eef2f7; padding-bottom:10px; font-size:1rem; text-transform:uppercase; letter-spacing:0.5px;">&#128203; Resumen Final y Firmas</h3>
         <div class="resumen-final">
             <div class="resumen-box"><strong style="color:var(--success-green)">PUNTOS OK</strong><br><span id="res-ok">0</span></div>
             <div class="resumen-box"><strong style="color:var(--danger-red)">PUNTOS NO OK</strong><br><span id="res-nok">0</span></div>
@@ -375,12 +584,13 @@
         </div>
     </div>
     <div class="contenedor-botones-guardar">
-        <button onclick="guardarYContinuar()" style="background:var(--elecnor-blue); color:white; flex: 1; padding:15px; font-size:16px;">💾 GUARDAR Y CONTINUAR RUTA</button>
-        <button onclick="guardarInspeccion()" style="background:var(--success-green); color:white; flex: 1; padding:15px; font-size:16px;">✅ FINALIZAR Y SALIR</button>
+        <button onclick="guardarYContinuar()" class="btn-guardar-cont" title="Guarda y abre un formulario en blanco">&#128190; Guardar y Continuar</button>
+        <button onclick="guardarYClonar()" class="btn-guardar-clonar" title="Guarda y abre el mismo formulario con las respuestas copiadas — solo cambia el equipo">&#128260; Guardar y Clonar</button>
+        <button onclick="guardarInspeccion()" class="btn-guardar-fin" title="Guarda y vuelve al inicio">&#9989; Finalizar y Salir</button>
     </div>
 </div>
 
-<script src="app.js"></script>
+<script src="configData.js"></script> <script src="app.js"></script>
 
 </body>
 </html>
