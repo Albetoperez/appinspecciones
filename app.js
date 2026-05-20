@@ -819,11 +819,11 @@ function actualizarProgreso() {
     const naRadio = document.querySelectorAll('input[value="na"]:checked').length;
     
     const selects = Array.from(document.querySelectorAll('select.select-estado'));
-    const okSelect = selects.filter(s => s.value === 'ok').length;
-    const nokSelect = selects.filter(s => s.value === 'nok').length;
-    const naSelect = selects.filter(s => s.value === 'na').length;
+    const okSelect = selects.filter(s => s.value === 'OK').length;
+    const nokSelect = selects.filter(s => s.value === 'NOK').length;
+    const naSelect = selects.filter(s => s.value === 'NA').length;
 
-    const autoNas = selects.filter(s => s.style.display === 'none' && s.value === 'na').length;
+    const autoNas = selects.filter(s => s.style.display === 'none' && s.value === 'NA').length;
 
     const ok = okRadio + okSelect;
     const nok = nokRadio + nokSelect;
@@ -920,8 +920,8 @@ function marcarTodoOk(b) {
             if(okRadio) okRadio.checked = true;
 
             const select = item.querySelector('select.select-estado:not([data-auto="true"])');
-            if(select && select.value !== 'na') {
-                select.value = 'ok';
+            if(select && select.value !== 'NA') {
+                select.value = 'OK';
                 select.className = 'select-estado ok';
             }
         });
@@ -943,10 +943,10 @@ function evaluarVano(idx) {
         const diff = Math.abs(real - nom);
         
         if(diff <= tol) {
-            selObj.value = 'ok';
+            selObj.value = 'OK';
             selObj.className = 'select-estado ok';
         } else {
-            selObj.value = 'nok';
+            selObj.value = 'NOK';
             selObj.className = 'select-estado nok';
         }
     }
@@ -989,12 +989,12 @@ function evaluarVerifNum(idx, min, max) {
         input.style.color = '#333';
     } else {
         if (val >= min && val <= max) {
-            selObj.value = 'ok';
+            selObj.value = 'OK';
             selObj.className = 'select-estado ok';
             input.style.borderColor = 'var(--success-green)';
             input.style.color = 'var(--success-green)';
         } else {
-            selObj.value = 'nok';
+            selObj.value = 'NOK';
             selObj.className = 'select-estado nok';
             input.style.borderColor = 'var(--danger-red)';
             input.style.color = 'var(--danger-red)';
@@ -1109,9 +1109,9 @@ function cargarChecklist(datosExistentes = null, esSubsanacion = false) {
                             <div class="inspeccion-item" data-bloque="${bloqueLogico}" data-desc="${desc}" data-shared-obs="${sharedObsId}" data-shared-img="${sharedImgId}" style="border:none; padding:0;">
                                 <select class="select-estado ${selColorClass}" onchange="this.className='select-estado '+this.value.toLowerCase(); actualizarProgreso();">
                                     <option value="PENDIENTE" ${resp.estado==='PENDIENTE'?'selected':''} hidden>-</option>
-                                    <option value="ok" ${resp.estado==='OK'?'selected':''}>OK</option>
-                                    <option value="nok" ${resp.estado==='NOK'?'selected':''}>NOK</option>
-                                    <option value="na" ${resp.estado==='NA'?'selected':''}>N/A</option>
+                                    <option value="OK" ${resp.estado==='OK'?'selected':''}>OK</option>
+                                    <option value="NOK" ${resp.estado==='NOK'?'selected':''}>NOK</option>
+                                    <option value="NA" ${resp.estado==='NA'?'selected':''}>N/A</option>
                                 </select>
                             </div>
                         </td>`;
@@ -1218,8 +1218,8 @@ function cargarChecklist(datosExistentes = null, esSubsanacion = false) {
                         <td style="padding:4px;text-align:center;">
                             <select id="sel-${contador}" class="select-estado ${selColorClass}" data-auto="true" style="pointer-events:none; width:60px;" tabindex="-1">
                                 <option value="PENDIENTE" ${resp.estado==='PENDIENTE'?'selected':''} hidden>-</option>
-                                <option value="ok" ${resp.estado==='OK'?'selected':''}>OK</option>
-                                <option value="nok" ${resp.estado==='NOK'?'selected':''}>NOK</option>
+                                <option value="OK" ${resp.estado==='OK'?'selected':''}>OK</option>
+                                <option value="NOK" ${resp.estado==='NOK'?'selected':''}>NOK</option>
                             </select>
                         </td>
                         <td class="td-acumulado" style="padding:4px;text-align:center;font-weight:bold;font-size:11px;">
@@ -1551,8 +1551,8 @@ function cargarChecklist(datosExistentes = null, esSubsanacion = false) {
                             <span style="font-weight:bold; color:var(--elecnor-blue); font-size:12px; flex-grow:1;">${esc(desc)}</span>
                             <select id="sel-${contador}" class="select-estado ${selColorClass}" onchange="this.className='select-estado '+this.value.toLowerCase(); actualizarProgreso();" style="width: 110px; padding: 8px; font-size: 11px; flex-shrink:0;">
                                 <option value="PENDIENTE" ${resp.estado==='PENDIENTE'?'selected':''} hidden>-</option>
-                                <option value="ok" ${resp.estado==='OK'?'selected':''}>OK</option>
-                                <option value="nok" ${resp.estado==='NOK'?'selected':''}>NOK</option>
+                                <option value="OK" ${resp.estado==='OK'?'selected':''}>OK</option>
+                                <option value="NOK" ${resp.estado==='NOK'?'selected':''}>NOK</option>
                                 <option value="na" ${resp.estado==='NA'?'selected':''}>N/A</option>
                             </select>
                         </div>
